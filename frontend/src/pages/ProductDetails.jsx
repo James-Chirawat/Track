@@ -145,7 +145,7 @@ const ProductDetails = () => {
       // Planting fields
       farm_location: 'ที่ตั้งฟาร์ม',
       planting_date: 'วันที่ปลูก',
-      seed_variety: 'พันธุ์โกโก้',
+      seed_variety: 'พันธุ์ผำอินทรีย์',
       farmer_name: 'ชื่อเกษตรกร',
       farm_size: 'ขนาดฟาร์ม (เฮกตาร์)',
       
@@ -218,7 +218,7 @@ const ProductDetails = () => {
               <div className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
                   <i className="ri-seedling-line text-xl sm:text-2xl text-amber-600 mr-2"></i>
-                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">ระบบติดตามข้อมูลโกโก้</h1>
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">ระบบติดตามข้อมูลผำอินทรีย์</h1>
                 </div>
               </div>
             </div>
@@ -245,7 +245,7 @@ const ProductDetails = () => {
               <div className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
                   <i className="ri-seedling-line text-xl sm:text-2xl text-amber-600 mr-2"></i>
-                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">ระบบติดตามข้อมูลโกโก้</h1>
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">ระบบติดตามข้อมูลผำอินทรีย์</h1>
                 </div>
               </div>
             </div>
@@ -278,7 +278,7 @@ const ProductDetails = () => {
               <div className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
                   <i className="ri-seedling-line text-xl sm:text-2xl text-amber-600 mr-2"></i>
-                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">ระบบติดตามข้อมูลโกโก้</h1>
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">ระบบติดตามข้อมูลผำอินทรีย์</h1>
                 </div>
               </div>
             </div>
@@ -304,7 +304,7 @@ const ProductDetails = () => {
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <i className="ri-seedling-line text-xl sm:text-2xl text-amber-600 mr-2"></i>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">ระบบติดตามข้อมูลโกโก้</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">ระบบติดตามข้อมูลผำอินทรีย์</h1>
               </div>
             </div>
           </div>

@@ -222,7 +222,7 @@ const Dashboard = () => {
       tempContainer.innerHTML = `
         <div style="text-align: center; margin-bottom: 30px;">
           <h1 style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 10px;">
-            QR Codes - ระบบติดตามโกโก้
+            QR Codes - ระบบติดตามผำอินทรีย์
           </h1>
           <p style="color: #6b7280; font-size: 14px;">
             ${selectedBranch ? branches.find(b => b.id === selectedBranch)?.name || 'สาขาที่เลือก' : 'ทุกสาขา'}
@@ -389,10 +389,10 @@ const Dashboard = () => {
         <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              ยินดีต้อนรับสู่ระบบติดตามโกโก้
+              ยินดีต้อนรับสู่ระบบติดตามผำอินทรีย์
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">
-              ติดตามการผลิตโกโก้จากฟาร์มสู่ผลิตภัณฑ์สำเร็จรูป
+              ติดตามการผลิตผำอินทรีย์จากฟาร์มสู่ผลิตภัณฑ์สำเร็จรูป
             </p>
           </div>
           

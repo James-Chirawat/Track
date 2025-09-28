@@ -1,10 +1,10 @@
-# Cocoa Track - Production Tracking System
+# Organic Track - Production Tracking System
 
-A comprehensive cocoa production tracking system that follows the journey from farm to finished product through upstream, midstream, and downstream processes.
+A comprehensive organic production tracking system that follows the journey from farm to finished product through upstream, midstream, and downstream processes.
 
 ## 🌱 Overview
 
-Cocoa Track enables complete traceability of cocoa production with:
+Organic Track enables complete traceability of organic production with:
 - **Upstream**: Farm planting, growing, and harvesting
 - **Midstream**: Fermentation, drying, and roasting processes  
 - **Downstream**: Grinding, packaging, and distribution

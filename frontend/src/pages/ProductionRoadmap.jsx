@@ -36,7 +36,7 @@ const ProductionRoadmap = () => {
           fields: [
             { name: 'farm_location', label: 'ที่ตั้งฟาร์ม', type: 'text', required: true },
             { name: 'planting_date', label: 'วันที่ปลูก', type: 'date', required: true },
-            { name: 'seed_variety', label: 'พันธุ์โกโก้', type: 'text', required: true },
+            { name: 'seed_variety', label: 'พันธุ์ผำอินทรีย์', type: 'text', required: true },
             { name: 'farmer_name', label: 'ชื่อเกษตรกร', type: 'text', required: true },
             { name: 'farm_size', label: 'ขนาดฟาร์ม (เฮกตาร์)', type: 'number', required: true }
           ]
@@ -521,7 +521,7 @@ const ProductionRoadmap = () => {
       tempContainer.innerHTML = `
         <div style="border: 3px solid #000; padding: 30px; background: white;">
           <div style="font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #000;">
-            ระบบติดตามโกโก้
+            ระบบติดตามผำอินทรีย์
           </div>
           <div id="temp-qr" style="margin: 30px 0; display: flex; justify-content: center;">
             <div style="background: white; padding: 10px;">
@@ -580,7 +580,7 @@ const ProductionRoadmap = () => {
           แผนผังการผลิต
         </h1>
         <p className="text-gray-600">
-          ติดตามการผลิตโกโก้ผ่านกระบวนการต้นน้ำ กลางน้ำ และปลายน้ำ
+          ติดตามการผลิตผำอินทรีย์ผ่านกระบวนการต้นน้ำ กลางน้ำ และปลายน้ำ
         </p>
       </div>
 
@@ -620,7 +620,7 @@ const ProductionRoadmap = () => {
                   <i className="ri-add-circle-line text-6xl text-amber-600 mb-4"></i>
                   <h3 className="text-xl font-bold text-gray-900 mb-4">สร้างล้อตสินค้าใหม่</h3>
                   <p className="text-gray-600 mb-6">
-                    เริ่มติดตามชุดผลิตโกโก้ใหม่จากฟาร์มสู่ผลิตภัณฑ์สำเร็จรูป
+                    เริ่มติดตามชุดผลิตผำอินทรีย์ใหม่จากฟาร์มสู่ผลิตภัณฑ์สำเร็จรูป
                   </p>
                   <button
                     onClick={startNewProduct}

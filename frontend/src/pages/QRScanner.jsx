@@ -107,7 +107,7 @@ const QRScanner = () => {
           สแกน QR Code
         </h1>
         <p className="text-gray-600">
-          สแกน QR Code เพื่อดูประวัติการผลิตโกโก้ทั้งหมด
+          สแกน QR Code เพื่อดูประวัติการผลิตผำอินทรีย์ทั้งหมด
         </p>
       </div>
 
@@ -212,7 +212,7 @@ const QRScanner = () => {
           <ul className="space-y-2 text-amber-700">
             <li className="flex items-start">
               <i className="ri-checkbox-circle-line mr-2 mt-0.5 text-amber-600"></i>
-              <span>ใช้กล้องสแกน QR Code บนผลิตภัณฑ์โกโก้</span>
+              <span>ใช้กล้องสแกน QR Code บนผลิตภัณฑ์ผำอินทรีย์</span>
             </li>
             <li className="flex items-start">
               <i className="ri-checkbox-circle-line mr-2 mt-0.5 text-amber-600"></i>
