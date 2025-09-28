@@ -608,7 +608,7 @@ const Dashboard = () => {
             <div className="bg-green-100 rounded-full p-4 mb-2">
               <i className="ri-seedling-line text-2xl text-green-600"></i>
             </div>
-            <div className="ml-3">
+            <div className="text-start ml-1">
               <h4 className="font-semibold text-gray-900">ต้นน้ำ</h4>
               <p className="text-sm text-gray-600">ฟาร์มและการเก็บเกี่ยว</p>
             </div>
@@ -622,7 +622,7 @@ const Dashboard = () => {
             <div className="bg-yellow-100 rounded-full p-4 mb-2">
               <i className="ri-settings-3-line text-2xl text-yellow-600"></i>
             </div>
-            <div className="ml-3">
+            <div className="text-start ml-1">
               <h4 className="font-semibold text-gray-900">กลางน้ำ</h4>
               <p className="text-sm text-gray-600">การแปรรูป</p>
             </div>
@@ -636,7 +636,7 @@ const Dashboard = () => {
             <div className="bg-blue-100 rounded-full p-4 mb-2">
               <i className="ri-shopping-bag-line text-2xl text-blue-600"></i>
             </div>
-            <div className="ml-3">
+            <div className="text-start ml-1">
               <h4 className="font-semibold text-gray-900">ปลายน้ำ</h4>
               <p className="text-sm text-gray-600">บรรจุภัณฑ์และจัดจำหน่าย</p>
             </div>
