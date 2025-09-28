@@ -1,12 +1,9 @@
 /**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
+ * Cocoa Track Backend API
+ * Handles all data operations for the cocoa production tracking system
  */
+
+import { createClient } from '@supabase/supabase-js'
 
 export default {
 	async fetch(request, env, ctx) {
@@ -17,7 +14,34 @@ export default {
 			return handleCORS();
 		}
 
+		// Initialize Supabase client
+		const supabase = createClient(
+			env.SUPABASE_URL || 'https://sgbfyazjkdbtopzkndkd.supabase.co',
+			env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnYmZ5YXpqa2RidG9wemtuZGtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2NTIwMzMsImV4cCI6MjA2ODIyODAzM30.jsfpX2AvzjCiTbU-3TycydgNkhR1lxsrsl1aarDllEI'
+		);
+
 		// API Routes
+		if (url.pathname === '/api/branches') {
+			return handleBranches(request, supabase);
+		}
+
+		if (url.pathname === '/api/products') {
+			return handleProducts(request, supabase);
+		}
+
+		if (url.pathname.startsWith('/api/products/')) {
+			const productId = url.pathname.split('/')[3];
+			return handleProductById(request, supabase, productId);
+		}
+
+		if (url.pathname === '/api/production-stages') {
+			return handleProductionStages(request, supabase);
+		}
+
+		if (url.pathname === '/api/dashboard') {
+			return handleDashboard(request, supabase);
+		}
+
 		if (url.pathname === '/api/hello') {
 			return handleHello(request);
 		}
@@ -40,6 +64,357 @@ function handleCORS() {
 			'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 		},
 	});
+}
+
+// Branches API Handler
+async function handleBranches(request, supabase) {
+	const headers = {
+		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*',
+	};
+
+	try {
+		if (request.method === 'GET') {
+			const { data, error } = await supabase
+				.from('branches')
+				.select('*')
+				.order('name');
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		if (request.method === 'POST') {
+			const body = await request.json();
+			const { data, error } = await supabase
+				.from('branches')
+				.insert([body])
+				.select()
+				.single();
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), { 
+			status: 405, 
+			headers 
+		});
+	} catch (error) {
+		return new Response(JSON.stringify({ success: false, error: error.message }), { 
+			status: 500, 
+			headers 
+		});
+	}
+}
+
+// Products API Handler
+async function handleProducts(request, supabase) {
+	const headers = {
+		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*',
+	};
+
+	try {
+		if (request.method === 'GET') {
+			const { data, error } = await supabase
+				.from('products')
+				.select(`
+					*,
+					branches (
+						id,
+						name,
+						location
+					)
+				`)
+				.order('created_at', { ascending: false });
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		if (request.method === 'POST') {
+			const body = await request.json();
+			const { data, error } = await supabase
+				.from('products')
+				.insert([body])
+				.select(`
+					*,
+					branches (
+						id,
+						name,
+						location
+					)
+				`)
+				.single();
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), { 
+			status: 405, 
+			headers 
+		});
+	} catch (error) {
+		return new Response(JSON.stringify({ success: false, error: error.message }), { 
+			status: 500, 
+			headers 
+		});
+	}
+}
+
+// Single Product API Handler
+async function handleProductById(request, supabase, productId) {
+	const headers = {
+		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*',
+	};
+
+	try {
+		if (request.method === 'GET') {
+			// Get product details
+			const { data: product, error: productError } = await supabase
+				.from('products')
+				.select(`
+					*,
+					branches (
+						id,
+						name,
+						location,
+						manager_name
+					)
+				`)
+				.eq('id', productId)
+				.single();
+
+			if (productError) throw productError;
+
+			// Get production stages
+			const { data: stages, error: stagesError } = await supabase
+				.from('production_stages')
+				.select('*')
+				.eq('product_id', productId)
+				.order('recorded_at');
+
+			if (stagesError) throw stagesError;
+
+			return new Response(JSON.stringify({ 
+				success: true, 
+				data: { 
+					product, 
+					stages: stages || [] 
+				} 
+			}), { headers });
+		}
+
+		if (request.method === 'PUT') {
+			const body = await request.json();
+			const { data, error } = await supabase
+				.from('products')
+				.update(body)
+				.eq('id', productId)
+				.select(`
+					*,
+					branches (
+						id,
+						name,
+						location
+					)
+				`)
+				.single();
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), { 
+			status: 405, 
+			headers 
+		});
+	} catch (error) {
+		return new Response(JSON.stringify({ success: false, error: error.message }), { 
+			status: 500, 
+			headers 
+		});
+	}
+}
+
+// Production Stages API Handler
+async function handleProductionStages(request, supabase) {
+	const headers = {
+		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*',
+	};
+
+	try {
+		if (request.method === 'POST') {
+			const body = await request.json();
+			const { data, error } = await supabase
+				.from('production_stages')
+				.insert([body])
+				.select()
+				.single();
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), { 
+			status: 405, 
+			headers 
+		});
+	} catch (error) {
+		return new Response(JSON.stringify({ success: false, error: error.message }), { 
+			status: 500, 
+			headers 
+		});
+	}
+}
+
+// Dashboard API Handler
+async function handleDashboard(request, supabase) {
+	const headers = {
+		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*',
+	};
+
+	try {
+		if (request.method === 'GET') {
+			// Get all branches
+			const { data: branches, error: branchesError } = await supabase
+				.from('branches')
+				.select('id, name, location')
+				.order('name');
+
+			if (branchesError) throw branchesError;
+
+			// Get products with branch information
+			const { data: products, error: productsError } = await supabase
+				.from('products')
+				.select(`
+					id, 
+					status, 
+					branch_id,
+					branches (
+						id,
+						name,
+						location
+					)
+				`);
+
+			if (productsError) throw productsError;
+
+			// Get recent activity
+			const { data: recentActivity, error: activityError } = await supabase
+				.from('production_stages')
+				.select(`
+					id,
+					stage_name,
+					recorded_at,
+					products (
+						id,
+						batch_number,
+						branches (
+							name
+						)
+					)
+				`)
+				.order('recorded_at', { ascending: false })
+				.limit(10);
+
+			if (activityError) throw activityError;
+
+			// Calculate overall statistics
+			const totalProducts = products?.length || 0;
+			const inProduction = products?.filter(p => p.status === 'in_production').length || 0;
+			const completed = products?.filter(p => p.status === 'completed').length || 0;
+			const cancelled = products?.filter(p => p.status === 'cancelled').length || 0;
+
+			// Calculate detailed branch statistics
+			const branchStats = {};
+			
+			// Initialize all branches with zero counts
+			branches?.forEach(branch => {
+				branchStats[branch.id] = {
+					branchId: branch.id,
+					branchName: branch.name,
+					branchLocation: branch.location,
+					total: 0,
+					inProduction: 0,
+					completed: 0,
+					cancelled: 0,
+					statusBreakdown: {
+						in_production: 0,
+						completed: 0,
+						cancelled: 0
+					}
+				};
+			});
+
+			// Count products by branch and status
+			products?.forEach(product => {
+				if (product.branch_id && branchStats[product.branch_id]) {
+					const branch = branchStats[product.branch_id];
+					branch.total++;
+					
+					switch (product.status) {
+						case 'in_production':
+							branch.inProduction++;
+							branch.statusBreakdown.in_production++;
+							break;
+						case 'completed':
+							branch.completed++;
+							branch.statusBreakdown.completed++;
+							break;
+						case 'cancelled':
+							branch.cancelled++;
+							branch.statusBreakdown.cancelled++;
+							break;
+					}
+				}
+			});
+
+			// Convert branchStats object to array for easier frontend handling
+			const branchStatsArray = Object.values(branchStats);
+
+			// Calculate status distribution
+			const statusDistribution = {
+				in_production: { count: inProduction, percentage: totalProducts > 0 ? Math.round((inProduction / totalProducts) * 100) : 0 },
+				completed: { count: completed, percentage: totalProducts > 0 ? Math.round((completed / totalProducts) * 100) : 0 },
+				cancelled: { count: cancelled, percentage: totalProducts > 0 ? Math.round((cancelled / totalProducts) * 100) : 0 }
+			};
+
+			return new Response(JSON.stringify({ 
+				success: true, 
+				data: {
+					totalProducts,
+					inProduction,
+					completed,
+					cancelled,
+					statusDistribution,
+					branchStats: branchStatsArray,
+					recentActivity: recentActivity || []
+				}
+			}), { headers });
+		}
+
+		return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), { 
+			status: 405, 
+			headers 
+		});
+	} catch (error) {
+		return new Response(JSON.stringify({ success: false, error: error.message }), { 
+			status: 500, 
+			headers 
+		});
+	}
 }
 
 async function handleHello(request) {
