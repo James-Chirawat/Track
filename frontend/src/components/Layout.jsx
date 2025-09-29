@@ -7,7 +7,7 @@ const Layout = ({ children }) => {
   const navigation = [
     { name: 'แดชบอร์ด', href: '/', icon: 'ri-dashboard-line' },
     { name: 'แผนผังการผลิต', href: '/roadmap', icon: 'ri-route-line' },
-    { name: 'สแกน QR Code', href: '/scanner', icon: 'ri-qr-scan-line' },
+    // { name: 'สแกน QR Code', href: '/scanner', icon: 'ri-qr-scan-line' },
   ]
 
   return (
