@@ -12,7 +12,7 @@ const ENTERPRISE_NAMES = [
   'วิสาหกิจชุมชนบ้านเนินสะอาดไร่นาสวนผสม',
   'วิสาหกิจชุมชนธิดาผักปลอดภัย',
   'วิสาหกิจชุมชนเกษตรอินทรีย์ N-DO Fulltime',
-  'วิสาหกิจชุมชนSociety farm',
+  'วิสาหกิจชุมชน Society farm',
   'วิสาหกิจชุมชนดองได้ดองดี',
   'วิสาหกิจชุมชนไร่ฟุ้งเฟื่องเมืองบางขลัง',
   'วิสาหกิจชุมชนพืชสมุนไพรนครบางขลัง',
@@ -92,6 +92,12 @@ const DailyRecord = () => {
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   
+  // Number of ponds (dynamic)
+  const [numberOfPonds, setNumberOfPonds] = useState(() => {
+    const saved = localStorage.getItem('dailyRecord_numberOfPonds')
+    return saved ? parseInt(saved) : 0
+  })
+  
   // Font size for accessibility
   const [fontSize, setFontSize] = useState(() => {
     const saved = localStorage.getItem('dailyRecord_fontSize')
@@ -109,11 +115,25 @@ const DailyRecord = () => {
   // Edit mode tracking
   const [editingRecordId, setEditingRecordId] = useState(null)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [isLoadingData, setIsLoadingData] = useState(false) // Flag to skip useEffect during data loading
   
   // Save font size preference
   useEffect(() => {
     localStorage.setItem('dailyRecord_fontSize', fontSize)
   }, [fontSize])
+  
+  // Save number of ponds preference
+  useEffect(() => {
+    localStorage.setItem('dailyRecord_numberOfPonds', numberOfPonds.toString())
+  }, [numberOfPonds])
+  
+  // Helper function to generate pond data for each section
+  const generatePondData = (num, template) => {
+    return Array.from({ length: num }, (_, i) => ({
+      pondNumber: i + 1,
+      ...template
+    }))
+  }
 
   // Header data
   const [headerData, setHeaderData] = useState({
@@ -130,82 +150,185 @@ const DailyRecord = () => {
     }
   })
 
+  // Template data for each section
+  const section1Template = {
+    pondWidth: '',      // กว้าง (เมตร)
+    pondLength: '',     // ยาว (เมตร)
+    waterRestedTwoDays: null,
+    phBeforeCultivation: '',
+    phInRange: null,
+    waterLevelSetup: false,
+    pumpPositionSetup: false,
+    pumpScheduleSetup: false,
+    oxygenSystemSetup: false
+  }
+  
+  const section2Template = { quantity: '' }
+  
+  const section3Template = { phValue: '', phInRange: null }
+  
+  const section4Template = {
+    psb: { checked: false, quantity: '' },
+    peanut: { checked: false },
+    soybean: { checked: false, quantity: '' },
+    fruit: { checked: false, quantity: '' },
+    hormone: { checked: false, quantity: '' },
+    coconutWater: { checked: false, quantity: '' }
+  }
+  
+  const section5Template = {
+    colors: [],
+    foam: '',
+    smell: '',
+    sinking: '',
+    overall: [],
+    overallNotes: '',
+    contaminants: [],
+    otherContaminant: '',
+    otherNotes: ''
+  }
+  
+  const section6Template = {
+    weight: '',
+    soldTo: '',
+    quantity: '',
+    price: '',
+    revenue: ''
+  }
+
   // Section 1: Pre-cultivation water resting (per pond)
   const [section1Data, setSection1Data] = useState({
-    ponds: [1, 2, 3, 4].map(num => ({
-      pondNumber: num,
-      waterRestedTwoDays: null, // true/false/null
-      phBeforeCultivation: '',
-      phInRange: null, // true/false/null
-      waterLevelSetup: false, // ระดับน้ำอยู่ที่ 30 เซ็นติเมตร
-      pumpPositionSetup: false, // ตำแหน่งปั๊มน้ำทั้ง 2 ลึกจากผิวน้ำ 10-15 เซ็นติเมตร
-      pumpScheduleSetup: false, // ตั้งระบบน้ำวนให้ทำงาน 2 ช่วงเวลา
-      oxygenSystemSetup: false // ตั้งระบบการให้ออกซิเจนให้เปิดตลอดเวลา
-    }))
+    ponds: generatePondData(numberOfPonds, section1Template)
   })
 
   // Section 2: Mother strain quantity (per pond)
   const [section2Data, setSection2Data] = useState({
-    ponds: [1, 2, 3, 4].map(num => ({
-      pondNumber: num,
-      quantity: '' // kg
-    }))
+    ponds: generatePondData(numberOfPonds, section2Template)
   })
 
   // Section 3: pH measurement during cultivation (per pond)
   const [section3Data, setSection3Data] = useState({
-    beforeFeeding: [1, 2, 3, 4].map(num => ({
-      pondNumber: num,
-      phValue: '',
-      phInRange: null
-    })),
-    afterFeeding: [1, 2, 3, 4].map(num => ({
-      pondNumber: num,
-      phValue: '',
-      phInRange: null
-    }))
+    beforeFeeding: generatePondData(numberOfPonds, section3Template),
+    afterFeeding: generatePondData(numberOfPonds, section3Template)
   })
 
   // Section 4: Fertilizer/nutrients (per pond)
   const [section4Data, setSection4Data] = useState({
-    ponds: [1, 2, 3, 4].map(num => ({
-      pondNumber: num,
-      psb: { checked: false, quantity: '' },
-      peanut: { checked: false },
-      soybean: { checked: false, quantity: '' },
-      fruit: { checked: false, quantity: '' },
-      hormone: { checked: false, quantity: '' },
-      coconutWater: { checked: false, quantity: '' }
-    }))
+    ponds: generatePondData(numberOfPonds, section4Template)
   })
 
   // Section 5: Water fern characteristics (per pond)
   const [section5Data, setSection5Data] = useState({
-    ponds: [1, 2, 3, 4].map(num => ({
-      pondNumber: num,
-      colors: [], // multiple selection
-      foam: '',
-      smell: '',
-      sinking: '',
-      overall: [],
-      overallNotes: '', // ระบุเพิ่มเติมหากเจอกรณีอื่น ๆ สำหรับลักษณะโดยรวม
-      contaminants: [],
-      otherContaminant: '',
-      otherNotes: ''
-    }))
+    ponds: generatePondData(numberOfPonds, section5Template)
   })
 
   // Section 6: Harvest data (per pond)
   const [section6Data, setSection6Data] = useState({
-    ponds: [1, 2, 3, 4].map(num => ({
-      pondNumber: num,
-      weight: '', // kg
-      soldTo: '',
-      quantity: '',
-      price: '',
-      revenue: ''
-    }))
+    ponds: generatePondData(numberOfPonds, section6Template)
   })
+  
+  // Update pond data when numberOfPonds changes (skip when loading existing data)
+  useEffect(() => {
+    // Skip this effect when loading data from existing record
+    if (isLoadingData) return
+    
+    setSection1Data(prev => {
+      const currentLength = prev.ponds.length
+      if (numberOfPonds === currentLength) return prev
+      
+      if (numberOfPonds > currentLength) {
+        // Add more ponds
+        const newPonds = [...prev.ponds]
+        for (let i = currentLength; i < numberOfPonds; i++) {
+          newPonds.push({ pondNumber: i + 1, ...section1Template })
+        }
+        return { ponds: newPonds }
+      } else {
+        // Remove ponds
+        return { ponds: prev.ponds.slice(0, numberOfPonds) }
+      }
+    })
+    
+    setSection2Data(prev => {
+      const currentLength = prev.ponds.length
+      if (numberOfPonds === currentLength) return prev
+      
+      if (numberOfPonds > currentLength) {
+        const newPonds = [...prev.ponds]
+        for (let i = currentLength; i < numberOfPonds; i++) {
+          newPonds.push({ pondNumber: i + 1, ...section2Template })
+        }
+        return { ponds: newPonds }
+      } else {
+        return { ponds: prev.ponds.slice(0, numberOfPonds) }
+      }
+    })
+    
+    setSection3Data(prev => {
+      const currentBeforeLength = prev.beforeFeeding.length
+      if (numberOfPonds === currentBeforeLength) return prev
+      
+      if (numberOfPonds > currentBeforeLength) {
+        const newBefore = [...prev.beforeFeeding]
+        const newAfter = [...prev.afterFeeding]
+        for (let i = currentBeforeLength; i < numberOfPonds; i++) {
+          newBefore.push({ pondNumber: i + 1, ...section3Template })
+          newAfter.push({ pondNumber: i + 1, ...section3Template })
+        }
+        return { beforeFeeding: newBefore, afterFeeding: newAfter }
+      } else {
+        return { 
+          beforeFeeding: prev.beforeFeeding.slice(0, numberOfPonds),
+          afterFeeding: prev.afterFeeding.slice(0, numberOfPonds)
+        }
+      }
+    })
+    
+    setSection4Data(prev => {
+      const currentLength = prev.ponds.length
+      if (numberOfPonds === currentLength) return prev
+      
+      if (numberOfPonds > currentLength) {
+        const newPonds = [...prev.ponds]
+        for (let i = currentLength; i < numberOfPonds; i++) {
+          newPonds.push({ pondNumber: i + 1, ...section4Template })
+        }
+        return { ponds: newPonds }
+      } else {
+        return { ponds: prev.ponds.slice(0, numberOfPonds) }
+      }
+    })
+    
+    setSection5Data(prev => {
+      const currentLength = prev.ponds.length
+      if (numberOfPonds === currentLength) return prev
+      
+      if (numberOfPonds > currentLength) {
+        const newPonds = [...prev.ponds]
+        for (let i = currentLength; i < numberOfPonds; i++) {
+          newPonds.push({ pondNumber: i + 1, ...section5Template })
+        }
+        return { ponds: newPonds }
+      } else {
+        return { ponds: prev.ponds.slice(0, numberOfPonds) }
+      }
+    })
+    
+    setSection6Data(prev => {
+      const currentLength = prev.ponds.length
+      if (numberOfPonds === currentLength) return prev
+      
+      if (numberOfPonds > currentLength) {
+        const newPonds = [...prev.ponds]
+        for (let i = currentLength; i < numberOfPonds; i++) {
+          newPonds.push({ pondNumber: i + 1, ...section6Template })
+        }
+        return { ponds: newPonds }
+      } else {
+        return { ponds: prev.ponds.slice(0, numberOfPonds) }
+      }
+    })
+  }, [numberOfPonds, isLoadingData])
 
   // Calculate pH range status
   const calculatePhRange = (phValue) => {
@@ -294,10 +417,16 @@ const DailyRecord = () => {
     if (!record) return
 
     setIsLoading(true)
+    setIsLoadingData(true) // Set flag to prevent useEffect from overwriting data
+    
     try {
       // Set edit mode
       setEditingRecordId(record.id)
       setIsEditMode(true)
+      
+      // Restore number of ponds from record (default to 0 if not set)
+      const recordPondCount = record.number_of_ponds ?? record.section1_data?.ponds?.length ?? 0
+      setNumberOfPonds(recordPondCount)
 
       // Load header data
       setHeaderData({
@@ -314,30 +443,50 @@ const DailyRecord = () => {
         }
       })
 
-      // Load section data
+      // Load section data with default empty ponds if not present
       if (record.section1_data?.ponds) {
         setSection1Data(record.section1_data)
+      } else {
+        setSection1Data({ ponds: generatePondData(recordPondCount, section1Template) })
       }
+      
       if (record.section2_data?.ponds) {
         setSection2Data(record.section2_data)
+      } else {
+        setSection2Data({ ponds: generatePondData(recordPondCount, section2Template) })
       }
+      
       if (record.section3_data?.beforeFeeding) {
         setSection3Data(record.section3_data)
+      } else {
+        setSection3Data({
+          beforeFeeding: generatePondData(recordPondCount, section3Template),
+          afterFeeding: generatePondData(recordPondCount, section3Template)
+        })
       }
+      
       if (record.section4_data?.ponds) {
         setSection4Data(record.section4_data)
+      } else {
+        setSection4Data({ ponds: generatePondData(recordPondCount, section4Template) })
       }
+      
       if (record.section5_data?.ponds) {
         setSection5Data(record.section5_data)
+      } else {
+        setSection5Data({ ponds: generatePondData(recordPondCount, section5Template) })
       }
+      
       if (record.section6_data?.ponds) {
         setSection6Data(record.section6_data)
+      } else {
+        setSection6Data({ ponds: generatePondData(recordPondCount, section6Template) })
       }
 
       Swal.fire({
         icon: 'info',
         title: 'โหลดข้อมูลสำเร็จ',
-        html: `กำลังแก้ไขข้อมูล<br/>รอบที่ <strong>${record.cycle_number || 'ไม่ระบุ'}</strong> วันที่ <strong>${record.day_number}</strong>`,
+        html: `กำลังแก้ไขข้อมูล<br/>รอบที่ <strong>${record.cycle_number || 'ไม่ระบุ'}</strong> วันที่ <strong>${record.day_number}</strong><br/>จำนวน <strong>${recordPondCount}</strong> บ่อ`,
         confirmButtonText: 'ตกลง',
         confirmButtonColor: '#10b981',
         timer: 2000,
@@ -355,6 +504,10 @@ const DailyRecord = () => {
       })
     } finally {
       setIsLoading(false)
+      // Clear the loading flag after a short delay to ensure all state updates are complete
+      setTimeout(() => {
+        setIsLoadingData(false)
+      }, 100)
     }
   }
 
@@ -378,76 +531,30 @@ const DailyRecord = () => {
       }
     }))
     
-    // Reset sections to default
+    // Reset sections to default with current numberOfPonds
     setSection1Data({
-      ponds: [1, 2, 3, 4].map(num => ({
-        pondNumber: num,
-        waterRestedTwoDays: null,
-        phBeforeCultivation: '',
-        phInRange: null,
-        waterLevelSetup: false,
-        pumpPositionSetup: false,
-        pumpScheduleSetup: false,
-        oxygenSystemSetup: false
-      }))
+      ponds: generatePondData(numberOfPonds, section1Template)
     })
     
     setSection2Data({
-      ponds: [1, 2, 3, 4].map(num => ({
-        pondNumber: num,
-        quantity: ''
-      }))
+      ponds: generatePondData(numberOfPonds, section2Template)
     })
     
     setSection3Data({
-      beforeFeeding: [1, 2, 3, 4].map(num => ({
-        pondNumber: num,
-        phValue: '',
-        phInRange: null
-      })),
-      afterFeeding: [1, 2, 3, 4].map(num => ({
-        pondNumber: num,
-        phValue: '',
-        phInRange: null
-      }))
+      beforeFeeding: generatePondData(numberOfPonds, section3Template),
+      afterFeeding: generatePondData(numberOfPonds, section3Template)
     })
     
     setSection4Data({
-      ponds: [1, 2, 3, 4].map(num => ({
-        pondNumber: num,
-        psb: { checked: false, quantity: '' },
-        peanut: { checked: false },
-        soybean: { checked: false, quantity: '' },
-        fruit: { checked: false, quantity: '' },
-        hormone: { checked: false, quantity: '' },
-        coconutWater: { checked: false, quantity: '' }
-      }))
+      ponds: generatePondData(numberOfPonds, section4Template)
     })
     
     setSection5Data({
-      ponds: [1, 2, 3, 4].map(num => ({
-        pondNumber: num,
-        colors: [],
-        foam: '',
-        smell: '',
-        sinking: '',
-        overall: [],
-        overallNotes: '',
-        contaminants: [],
-        otherContaminant: '',
-        otherNotes: ''
-      }))
+      ponds: generatePondData(numberOfPonds, section5Template)
     })
     
     setSection6Data({
-      ponds: [1, 2, 3, 4].map(num => ({
-        pondNumber: num,
-        weight: '',
-        soldTo: '',
-        quantity: '',
-        price: '',
-        revenue: ''
-      }))
+      ponds: generatePondData(numberOfPonds, section6Template)
     })
   }
 
@@ -745,10 +852,13 @@ const DailyRecord = () => {
         start_date: headerData.startDate || null,
         day_number: headerData.dayNumber ? parseInt(headerData.dayNumber) : 1,
         recorder_name: headerData.recorderName || null,
+        number_of_ponds: numberOfPonds,
         activities: headerData.activities || {},
         section1_data: {
           ponds: section1Data.ponds.map(pond => ({
             pondNumber: pond.pondNumber,
+            pondWidth: pond.pondWidth || '',
+            pondLength: pond.pondLength || '',
             waterRestedTwoDays: pond.waterRestedTwoDays,
             phBeforeCultivation: pond.phBeforeCultivation,
             phInRange: pond.phInRange,
@@ -1083,8 +1193,8 @@ const DailyRecord = () => {
           </select>
         </div>
 
-        {/* Row 2: Cycle Number, Start Date, Recorder Name */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6">
+        {/* Row 2: Cycle Number, Start Date, Recorder Name, Number of Ponds */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
           {/* Cycle Number */}
           <div>
             <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
@@ -1127,6 +1237,46 @@ const DailyRecord = () => {
               placeholder="ชื่อผู้บันทึก"
               className="w-full p-3 sm:p-4 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
             />
+          </div>
+
+          {/* Number of Ponds */}
+          <div>
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
+              <i className="ri-water-flash-line mr-1 text-emerald-600"></i>
+              จำนวนบ่อ
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setNumberOfPonds(prev => Math.max(0, prev - 1))}
+                className="p-3 sm:p-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl border-2 border-gray-300 transition-all active:scale-95"
+                disabled={numberOfPonds <= 0}
+              >
+                <i className="ri-subtract-line text-lg sm:text-xl"></i>
+              </button>
+              <input
+                type="number"
+                min="0"
+                max="20"
+                value={numberOfPonds}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value)
+                  if (!isNaN(val) && val >= 0 && val <= 20) {
+                    setNumberOfPonds(val)
+                  }
+                }}
+                className="w-20 p-3 sm:p-4 text-base sm:text-lg text-center border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-bold"
+              />
+              <button
+                type="button"
+                onClick={() => setNumberOfPonds(prev => Math.min(20, prev + 1))}
+                className="p-3 sm:p-4 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl border-2 border-emerald-300 transition-all active:scale-95"
+                disabled={numberOfPonds >= 20}
+              >
+                <i className="ri-add-line text-lg sm:text-xl"></i>
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">0-20 บ่อ</p>
           </div>
         </div>
 
@@ -1343,7 +1493,41 @@ const DailyRecord = () => {
         <div className="space-y-4 mb-6">
           {section1Data.ponds.map((pond, idx) => (
             <div key={pond.pondNumber} className="p-4 bg-gray-50 rounded-lg">
-              <div className="font-semibold text-gray-900 mb-3">บ่อที่ {pond.pondNumber}</div>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-gray-200">
+                <div className="font-semibold text-gray-900 text-lg">
+                  <i className="ri-water-flash-line mr-2 text-emerald-600"></i>
+                  บ่อที่ {pond.pondNumber}
+                </div>
+                {/* Pond Dimensions */}
+                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
+                  <span className="text-sm text-gray-600 font-medium">ขนาดบ่อ:</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={pond.pondWidth || ''}
+                    onChange={(e) => handleSection1PondChange(idx, 'pondWidth', e.target.value)}
+                    placeholder="กว้าง"
+                    className="w-20 p-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm"
+                  />
+                  <span className="text-gray-500 font-bold">×</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={pond.pondLength || ''}
+                    onChange={(e) => handleSection1PondChange(idx, 'pondLength', e.target.value)}
+                    placeholder="ยาว"
+                    className="w-20 p-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm"
+                  />
+                  <span className="text-sm text-gray-500">ม.</span>
+                  {pond.pondWidth && pond.pondLength && (
+                    <span className="text-sm text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded">
+                      = {(parseFloat(pond.pondWidth) * parseFloat(pond.pondLength)).toFixed(2)} ตร.ม.
+                    </span>
+                  )}
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm text-gray-600 mb-2">พักน้ำ ≥ 2 วัน</label>

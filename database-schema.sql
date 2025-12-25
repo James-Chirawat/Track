@@ -199,3 +199,7 @@ SELECT
     'Packaging',
     '{"packaging_date": "2024-07-01", "package_type": "Premium Chocolate Bar", "package_size": "100g", "batch_number": "COC-SAMPLE-001", "expiry_date": "2025-07-01"}'::jsonb
 FROM products p WHERE p.batch_number = 'COC-SAMPLE-001';
+
+-- Add number_of_ponds column to daily_cultivation_records (for dynamic pond count)
+ALTER TABLE daily_cultivation_records 
+ADD COLUMN IF NOT EXISTS number_of_ponds INTEGER DEFAULT 0;
