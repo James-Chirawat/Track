@@ -100,6 +100,41 @@ class ApiClient {
   async getDashboardData() {
     return this.request('/api/dashboard')
   }
+
+  // Daily Cultivation Records API
+  async getDailyRecords(params = {}) {
+    const queryParams = new URLSearchParams()
+    if (params.enterprise) queryParams.append('enterprise', params.enterprise)
+    if (params.cycle) queryParams.append('cycle', params.cycle)
+    if (params.limit) queryParams.append('limit', params.limit)
+    
+    const queryString = queryParams.toString()
+    return this.request(`/api/daily-records${queryString ? '?' + queryString : ''}`)
+  }
+
+  async createDailyRecord(recordData) {
+    return this.request('/api/daily-records', {
+      method: 'POST',
+      body: recordData,
+    })
+  }
+
+  async getDailyRecord(recordId) {
+    return this.request(`/api/daily-records/${recordId}`)
+  }
+
+  async updateDailyRecord(recordId, recordData) {
+    return this.request(`/api/daily-records/${recordId}`, {
+      method: 'PUT',
+      body: recordData,
+    })
+  }
+
+  async deleteDailyRecord(recordId) {
+    return this.request(`/api/daily-records/${recordId}`, {
+      method: 'DELETE',
+    })
+  }
 }
 
 export const apiClient = new ApiClient()

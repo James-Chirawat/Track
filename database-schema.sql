@@ -116,6 +116,57 @@ SELECT
 FROM branches b WHERE b.name = 'สาขากรุงเทพ'
 LIMIT 1;
 
+-- Daily Cultivation Records table - For organic water fern tracking
+CREATE TABLE IF NOT EXISTS daily_cultivation_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    enterprise_name VARCHAR(200) NOT NULL,
+    cycle_number INTEGER,
+    start_date DATE,
+    day_number INTEGER CHECK (day_number BETWEEN 1 AND 14),
+    recorder_name VARCHAR(100),
+    activities JSONB DEFAULT '{}',
+    -- Section 1: Pre-cultivation water resting
+    section1_data JSONB DEFAULT '{}',
+    -- Section 2: Mother strain quantity
+    section2_data JSONB DEFAULT '{}',
+    -- Section 3: pH measurements
+    section3_data JSONB DEFAULT '{}',
+    -- Section 4: Fertilizer/nutrients
+    section4_data JSONB DEFAULT '{}',
+    -- Section 5: Water fern characteristics
+    section5_data JSONB DEFAULT '{}',
+    -- Section 6: Harvest data
+    section6_data JSONB DEFAULT '{}',
+    recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for daily_cultivation_records
+CREATE INDEX IF NOT EXISTS idx_daily_records_enterprise ON daily_cultivation_records(enterprise_name);
+CREATE INDEX IF NOT EXISTS idx_daily_records_cycle ON daily_cultivation_records(cycle_number);
+CREATE INDEX IF NOT EXISTS idx_daily_records_date ON daily_cultivation_records(recorded_at);
+CREATE INDEX IF NOT EXISTS idx_daily_records_day ON daily_cultivation_records(day_number);
+
+-- Enable RLS for daily_cultivation_records
+ALTER TABLE daily_cultivation_records ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for daily_cultivation_records
+CREATE POLICY "Allow public read access on daily_cultivation_records" ON daily_cultivation_records
+    FOR SELECT USING (true);
+
+CREATE POLICY "Allow public insert on daily_cultivation_records" ON daily_cultivation_records
+    FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow public update on daily_cultivation_records" ON daily_cultivation_records
+    FOR UPDATE USING (true);
+
+-- Create trigger for daily_cultivation_records updated_at
+CREATE TRIGGER update_daily_cultivation_records_updated_at 
+    BEFORE UPDATE ON daily_cultivation_records 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- Sample production stages for the completed product
 INSERT INTO production_stages (product_id, stage_id, stage_name, stage_data) 
 SELECT 

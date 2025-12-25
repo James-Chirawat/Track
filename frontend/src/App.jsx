@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import ProductionRoadmap from './pages/ProductionRoadmap'
 import QRScanner from './pages/QRScanner'
 import ProductDetails from './pages/ProductDetails'
+import DailyRecord from './pages/DailyRecord'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         {/* Routes with Layout (navigation tabs) */}
         <Route path="/" element={<Layout><Dashboard /></Layout>} />
         <Route path="/roadmap" element={<Layout><ProductionRoadmap /></Layout>} />
+        <Route path="/daily-record" element={<Layout><DailyRecord /></Layout>} />
         <Route path="/scanner" element={<Layout><QRScanner /></Layout>} />
         
         {/* Standalone route without Layout (no navigation tabs) */}

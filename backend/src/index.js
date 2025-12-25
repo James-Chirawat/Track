@@ -42,6 +42,15 @@ export default {
 			return handleDashboard(request, supabase);
 		}
 
+		if (url.pathname === '/api/daily-records') {
+			return handleDailyRecords(request, supabase);
+		}
+
+		if (url.pathname.startsWith('/api/daily-records/')) {
+			const recordId = url.pathname.split('/')[3];
+			return handleDailyRecordById(request, supabase, recordId);
+		}
+
 		if (url.pathname === '/api/hello') {
 			return handleHello(request);
 		}
@@ -403,6 +412,155 @@ async function handleDashboard(request, supabase) {
 					recentActivity: recentActivity || []
 				}
 			}), { headers });
+		}
+
+		return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), { 
+			status: 405, 
+			headers 
+		});
+	} catch (error) {
+		return new Response(JSON.stringify({ success: false, error: error.message }), { 
+			status: 500, 
+			headers 
+		});
+	}
+}
+
+// Daily Cultivation Records API Handler
+async function handleDailyRecords(request, supabase) {
+	const headers = {
+		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*',
+	};
+
+	try {
+		if (request.method === 'GET') {
+			const url = new URL(request.url);
+			const enterpriseName = url.searchParams.get('enterprise');
+			const cycleNumber = url.searchParams.get('cycle');
+			const limit = url.searchParams.get('limit') || 50;
+
+			let query = supabase
+				.from('daily_cultivation_records')
+				.select('*')
+				.order('recorded_at', { ascending: false })
+				.limit(parseInt(limit));
+
+			if (enterpriseName) {
+				query = query.eq('enterprise_name', enterpriseName);
+			}
+			if (cycleNumber) {
+				query = query.eq('cycle_number', parseInt(cycleNumber));
+			}
+
+			const { data, error } = await query;
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		if (request.method === 'POST') {
+			const body = await request.json();
+			
+			// Transform the incoming data to match the database schema
+			const recordData = {
+				enterprise_name: body.header?.enterpriseName || body.enterprise_name,
+				cycle_number: parseInt(body.header?.cycleNumber) || body.cycle_number,
+				start_date: body.header?.startDate || body.start_date,
+				day_number: parseInt(body.header?.dayNumber) || body.day_number,
+				recorder_name: body.header?.recorderName || body.recorder_name,
+				activities: body.header?.activities || body.activities || {},
+				section1_data: body.section1 || body.section1_data || {},
+				section2_data: body.section2 || body.section2_data || {},
+				section3_data: body.section3 || body.section3_data || {},
+				section4_data: body.section4 || body.section4_data || {},
+				section5_data: body.section5 || body.section5_data || {},
+				section6_data: body.section6 || body.section6_data || {},
+				recorded_at: body.recordedAt || new Date().toISOString()
+			};
+
+			const { data, error } = await supabase
+				.from('daily_cultivation_records')
+				.insert([recordData])
+				.select()
+				.single();
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), { 
+			status: 405, 
+			headers 
+		});
+	} catch (error) {
+		return new Response(JSON.stringify({ success: false, error: error.message }), { 
+			status: 500, 
+			headers 
+		});
+	}
+}
+
+// Single Daily Record API Handler
+async function handleDailyRecordById(request, supabase, recordId) {
+	const headers = {
+		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*',
+	};
+
+	try {
+		if (request.method === 'GET') {
+			const { data, error } = await supabase
+				.from('daily_cultivation_records')
+				.select('*')
+				.eq('id', recordId)
+				.single();
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		if (request.method === 'PUT') {
+			const body = await request.json();
+			
+			const updateData = {};
+			if (body.header?.enterpriseName) updateData.enterprise_name = body.header.enterpriseName;
+			if (body.header?.cycleNumber) updateData.cycle_number = parseInt(body.header.cycleNumber);
+			if (body.header?.startDate) updateData.start_date = body.header.startDate;
+			if (body.header?.dayNumber) updateData.day_number = parseInt(body.header.dayNumber);
+			if (body.header?.recorderName) updateData.recorder_name = body.header.recorderName;
+			if (body.header?.activities) updateData.activities = body.header.activities;
+			if (body.section1) updateData.section1_data = body.section1;
+			if (body.section2) updateData.section2_data = body.section2;
+			if (body.section3) updateData.section3_data = body.section3;
+			if (body.section4) updateData.section4_data = body.section4;
+			if (body.section5) updateData.section5_data = body.section5;
+			if (body.section6) updateData.section6_data = body.section6;
+
+			const { data, error } = await supabase
+				.from('daily_cultivation_records')
+				.update(updateData)
+				.eq('id', recordId)
+				.select()
+				.single();
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, data }), { headers });
+		}
+
+		if (request.method === 'DELETE') {
+			const { error } = await supabase
+				.from('daily_cultivation_records')
+				.delete()
+				.eq('id', recordId);
+
+			if (error) throw error;
+
+			return new Response(JSON.stringify({ success: true, message: 'Record deleted' }), { headers });
 		}
 
 		return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), { 
