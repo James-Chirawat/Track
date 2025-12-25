@@ -78,11 +78,26 @@ const CONTAMINANT_OPTIONS = [
   { id: 'other', label: 'อื่น ๆ (ระบุ)' }
 ]
 
+// Font size levels for accessibility (using zoom for full page scaling)
+const FONT_SIZES = {
+  small: { label: 'เล็ก', scale: 0.85 },
+  normal: { label: 'ปกติ', scale: 1 },
+  large: { label: 'ใหญ่', scale: 1.15 },
+  xlarge: { label: 'ใหญ่มาก', scale: 1.35 }
+}
+
 const DailyRecord = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  
+  // Font size for accessibility
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem('dailyRecord_fontSize')
+    return saved || 'normal'
+  })
+  const [showFontControl, setShowFontControl] = useState(false)
   
   // Existing records tracking
   const [existingRecords, setExistingRecords] = useState([])
@@ -94,6 +109,11 @@ const DailyRecord = () => {
   // Edit mode tracking
   const [editingRecordId, setEditingRecordId] = useState(null)
   const [isEditMode, setIsEditMode] = useState(false)
+  
+  // Save font size preference
+  useEffect(() => {
+    localStorage.setItem('dailyRecord_fontSize', fontSize)
+  }, [fontSize])
 
   // Header data
   const [headerData, setHeaderData] = useState({
@@ -927,15 +947,99 @@ const DailyRecord = () => {
     </div>
   )
 
+  // Get current font scale
+  const fontScale = FONT_SIZES[fontSize]?.scale || 1
+
   return (
-    <div className="px-0 pb-8">
+    <div 
+      className="px-0 pb-8 transition-all duration-200 origin-top"
+      style={{ 
+        zoom: fontScale,
+        // Fallback for browsers that don't support zoom
+        WebkitTextSizeAdjust: `${fontScale * 100}%`
+      }}
+    >
+      {/* Animation keyframes */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+      {/* Floating Font Size Control Button - Using portal-like fixed positioning with inverse zoom */}
+      <div 
+        className="fixed bottom-24 right-4 z-50 sm:bottom-28 sm:right-6"
+        style={{ zoom: 1 / fontScale }} // Inverse zoom to keep button same size
+      >
+        <button
+          onClick={() => setShowFontControl(!showFontControl)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white p-4 sm:p-5 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95"
+          title="ปรับขนาดตัวอักษร"
+          aria-label="ปรับขนาดตัวอักษร"
+        >
+          <i className="ri-font-size text-2xl sm:text-3xl"></i>
+        </button>
+        
+        {/* Font Size Panel */}
+        {showFontControl && (
+          <div 
+            className="absolute bottom-20 right-0 bg-white rounded-xl shadow-2xl border-2 border-gray-200 p-5 min-w-[260px] sm:min-w-[280px]"
+            style={{ animation: 'fadeInUp 0.2s ease-out' }}
+          >
+            <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-emerald-200">
+              <span className="font-bold text-gray-800 flex items-center text-lg">
+                <i className="ri-text mr-2 text-emerald-600 text-xl"></i>
+                ขนาดตัวอักษร
+              </span>
+              <button 
+                onClick={() => setShowFontControl(false)}
+                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-all"
+              >
+                <i className="ri-close-line text-xl"></i>
+              </button>
+            </div>
+            <div className="space-y-3">
+              {Object.entries(FONT_SIZES).map(([key, value]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setFontSize(key)
+                    setShowFontControl(false)
+                  }}
+                  className={`w-full text-left px-5 py-4 rounded-xl transition-all flex items-center justify-between text-lg ${
+                    fontSize === key
+                      ? 'bg-emerald-100 text-emerald-800 font-bold border-2 border-emerald-400 shadow-md'
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-2 border-transparent'
+                  }`}
+                >
+                  <span style={{ fontSize: key === 'small' ? '14px' : key === 'normal' ? '16px' : key === 'large' ? '18px' : '22px' }}>
+                    {value.label}
+                  </span>
+                  {fontSize === key && <i className="ri-check-line text-emerald-600 text-xl"></i>}
+                </button>
+              ))}
+            </div>
+            <p className="text-sm text-gray-500 mt-4 text-center bg-gray-50 p-2 rounded-lg">
+              <i className="ri-information-line mr-1"></i>
+              การตั้งค่าจะถูกบันทึกไว้
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
           <i className="ri-file-list-3-line mr-2 text-emerald-600"></i>
           แบบบันทึกการเลี้ยงไข่น้ำอินทรีย์
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 text-base sm:text-lg">
           บันทึกข้อมูลการเพาะเลี้ยงไข่น้ำอินทรีย์ประจำวัน
         </p>
       </div>
@@ -955,32 +1059,36 @@ const DailyRecord = () => {
       )}
 
       {/* Header Section */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-emerald-200 flex items-center">
+          <i className="ri-information-line mr-2 text-emerald-600"></i>
           ข้อมูลทั่วไป
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {/* Enterprise Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              ชื่อวิสาหกิจ <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={headerData.enterpriseName}
-              onChange={(e) => handleHeaderChange('enterpriseName', e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            >
-              <option value="">เลือกวิสาหกิจ</option>
-              {ENTERPRISE_NAMES.map((name) => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
-          </div>
+        {/* Row 1: Enterprise Name (full width) */}
+        <div className="mb-4 sm:mb-6">
+          <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
+            <i className="ri-building-line mr-1 text-emerald-600"></i>
+            ชื่อวิสาหกิจ <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={headerData.enterpriseName}
+            onChange={(e) => handleHeaderChange('enterpriseName', e.target.value)}
+            className="w-full p-3 sm:p-4 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all"
+          >
+            <option value="">-- เลือกวิสาหกิจ --</option>
+            {ENTERPRISE_NAMES.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        </div>
 
+        {/* Row 2: Cycle Number, Start Date, Recorder Name */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6">
           {/* Cycle Number */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
+              <i className="ri-repeat-line mr-1 text-emerald-600"></i>
               รอบการเพาะเลี้ยงที่
             </label>
             <input
@@ -988,26 +1096,28 @@ const DailyRecord = () => {
               value={headerData.cycleNumber}
               onChange={(e) => handleHeaderChange('cycleNumber', e.target.value)}
               placeholder="ระบุรอบ"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full p-3 sm:p-4 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
             />
           </div>
 
           {/* Start Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
+              <i className="ri-calendar-line mr-1 text-emerald-600"></i>
               วันที่เริ่ม
             </label>
             <input
               type="date"
               value={headerData.startDate}
               onChange={(e) => handleHeaderChange('startDate', e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full p-3 sm:p-4 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
             />
           </div>
 
           {/* Recorder Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
+              <i className="ri-user-line mr-1 text-emerald-600"></i>
               ผู้บันทึก
             </label>
             <input
@@ -1015,7 +1125,7 @@ const DailyRecord = () => {
               value={headerData.recorderName}
               onChange={(e) => handleHeaderChange('recorderName', e.target.value)}
               placeholder="ชื่อผู้บันทึก"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full p-3 sm:p-4 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
             />
           </div>
         </div>
@@ -1095,17 +1205,19 @@ const DailyRecord = () => {
 
         {/* Day Number Selection */}
         <div className="mb-6">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <label className="text-sm font-medium text-gray-700">
-              กระบวนการเพาะเลี้ยงวันที่ (ให้ทำเครื่องหมาย X)
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <label className="text-sm sm:text-base font-semibold text-gray-700 flex items-center">
+              <i className="ri-calendar-check-line mr-2 text-emerald-600"></i>
+              กระบวนการเพาะเลี้ยงวันที่ (เลือกวัน)
             </label>
             {headerData.enterpriseName && recordedDays['_all']?.length > 0 && (
-              <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full font-medium">
-                บันทึกแล้ว {recordedDays['_all'].length} วัน (คลิกที่ ✓ เพื่อแก้ไข)
+              <span className="bg-amber-100 text-amber-800 text-xs sm:text-sm px-3 py-1.5 rounded-full font-medium">
+                <i className="ri-checkbox-circle-line mr-1"></i>
+                บันทึกแล้ว {recordedDays['_all'].length} วัน
               </span>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-7 sm:flex sm:flex-wrap gap-2 sm:gap-3">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((day) => {
               // Check if this day is recorded in any cycle
               const isRecordedAny = recordedDays['_all']?.includes(day)
@@ -1122,36 +1234,37 @@ const DailyRecord = () => {
               let buttonClass = ''
               if (isSelected) {
                 buttonClass = isEditMode 
-                  ? 'bg-amber-600 text-white shadow-lg ring-2 ring-amber-400'
-                  : 'bg-emerald-600 text-white shadow-lg ring-2 ring-emerald-400'
+                  ? 'bg-amber-600 text-white shadow-xl ring-4 ring-amber-300 scale-110'
+                  : 'bg-emerald-600 text-white shadow-xl ring-4 ring-emerald-300 scale-110'
               } else if (isRecordedInCycle) {
                 // Recorded in current cycle - green highlight
-                buttonClass = 'bg-emerald-100 text-emerald-800 border-2 border-emerald-400 hover:bg-emerald-200 cursor-pointer'
+                buttonClass = 'bg-emerald-100 text-emerald-800 border-3 border-emerald-400 hover:bg-emerald-200 hover:scale-105 cursor-pointer'
               } else if (isRecordedAny) {
                 // Recorded in other cycles - amber highlight
-                buttonClass = 'bg-amber-100 text-amber-800 border-2 border-amber-400 hover:bg-amber-200 cursor-pointer'
+                buttonClass = 'bg-amber-100 text-amber-800 border-3 border-amber-400 hover:bg-amber-200 hover:scale-105 cursor-pointer'
               } else {
-                buttonClass = 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                buttonClass = 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 border-2 border-gray-200'
               }
               
               return (
                 <button
                   key={day}
                   onClick={() => handleDayClick(day, currentCycle)}
-                  className={`relative w-12 h-12 rounded-lg font-bold transition-all ${buttonClass}`}
+                  className={`relative w-full sm:w-14 md:w-16 h-14 sm:h-14 md:h-16 rounded-xl font-bold text-lg sm:text-xl transition-all duration-200 active:scale-95 ${buttonClass}`}
                   title={isRecordedInCycle 
                     ? `วันที่ ${day} รอบที่ ${currentCycle} - บันทึกแล้ว (คลิกเพื่อแก้ไข)` 
                     : isRecordedAny 
                     ? `วันที่ ${day} มีการบันทึกแล้ว ${recordCount} รายการ - คลิกเพื่อดู/แก้ไข` 
                     : `วันที่ ${day}`}
+                  aria-label={`วันที่ ${day}`}
                 >
                   {day}
                   {isRecordedInCycle ? (
-                    <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                    <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold shadow-md">
                       ✓
                     </span>
                   ) : isRecordedAny && (
-                    <span className={`absolute -top-1 -right-1 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold ${
+                    <span className={`absolute -top-1.5 -right-1.5 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold shadow-md ${
                       recordCount > 1 ? 'bg-blue-500' : 'bg-amber-500'
                     }`}>
                       {recordCount > 1 ? recordCount : '✓'}
@@ -1214,10 +1327,10 @@ const DailyRecord = () => {
       </div>
 
       {/* Section 1: Pre-cultivation Water Resting */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
-          <span className="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3">1</span>
-          <h2 className="text-lg font-bold text-gray-900">
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
+        <div className="flex items-center mb-4 pb-3 border-b-2 border-emerald-200">
+          <span className="bg-emerald-600 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold mr-3 text-lg sm:text-xl shadow-md">1</span>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             การพักน้ำก่อนเลี้ยง (แยกตามบ่อ)
           </h2>
         </div>
@@ -1307,10 +1420,10 @@ const DailyRecord = () => {
       </div>
 
       {/* Section 2: Mother Strain Quantity */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
-          <span className="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3">2</span>
-          <h2 className="text-lg font-bold text-gray-900">
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
+        <div className="flex items-center mb-4 pb-3 border-b-2 border-emerald-200">
+          <span className="bg-emerald-600 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold mr-3 text-lg sm:text-xl shadow-md">2</span>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             ปริมาณแม่พันธุ์ไข่น้ำ (แยกตามบ่อ)
           </h2>
         </div>
@@ -1338,10 +1451,10 @@ const DailyRecord = () => {
       </div>
 
       {/* Section 3: pH Measurement During Cultivation */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
-          <span className="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3">3</span>
-          <h2 className="text-lg font-bold text-gray-900">
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
+        <div className="flex items-center mb-4 pb-3 border-b-2 border-emerald-200">
+          <span className="bg-emerald-600 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold mr-3 text-lg sm:text-xl shadow-md">3</span>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             การวัดค่า pH ระหว่างการเลี้ยง (แยกตามบ่อ)
           </h2>
         </div>
@@ -1402,10 +1515,10 @@ const DailyRecord = () => {
       </div>
 
       {/* Section 4: Fertilizer/Nutrients */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
-          <span className="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3">4</span>
-          <h2 className="text-lg font-bold text-gray-900">
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
+        <div className="flex items-center mb-4 pb-3 border-b-2 border-emerald-200">
+          <span className="bg-emerald-600 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold mr-3 text-lg sm:text-xl shadow-md">4</span>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             การใส่ปุ๋ย / สารอาหาร (ตารางบันทึกทีละบ่อ)
           </h2>
         </div>
@@ -1560,10 +1673,10 @@ const DailyRecord = () => {
       </div>
 
       {/* Section 5: Water Fern Characteristics */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
-          <span className="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3">5</span>
-          <h2 className="text-lg font-bold text-gray-900">
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
+        <div className="flex items-center mb-4 pb-3 border-b-2 border-emerald-200">
+          <span className="bg-emerald-600 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold mr-3 text-lg sm:text-xl shadow-md">5</span>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             ลักษณะไข่น้ำอินทรีย์
           </h2>
         </div>
@@ -1718,10 +1831,10 @@ const DailyRecord = () => {
       </div>
 
       {/* Section 6: Harvest */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
-          <span className="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3">6</span>
-          <h2 className="text-lg font-bold text-gray-900">
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
+        <div className="flex items-center mb-4 pb-3 border-b-2 border-emerald-200">
+          <span className="bg-emerald-600 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold mr-3 text-lg sm:text-xl shadow-md">6</span>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             การเก็บเกี่ยว (นับเฉพาะวันที่กรอกข้อมูล)
           </h2>
         </div>
@@ -1812,33 +1925,33 @@ const DailyRecord = () => {
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-center space-x-4">
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 mb-20">
         {isEditMode && (
           <button
             onClick={resetToNewRecord}
-            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center text-lg shadow-lg"
+            className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white font-bold py-4 sm:py-5 px-6 sm:px-8 rounded-xl transition-all flex items-center justify-center text-lg sm:text-xl shadow-lg hover:shadow-xl active:scale-95"
           >
-            <i className="ri-close-line mr-2"></i>
+            <i className="ri-close-line mr-2 text-xl sm:text-2xl"></i>
             ยกเลิกแก้ไข
           </button>
         )}
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className={`${
+          className={`w-full sm:w-auto ${
             isEditMode 
-              ? 'bg-amber-600 hover:bg-amber-700' 
-              : 'bg-emerald-600 hover:bg-emerald-700'
-          } text-white font-bold py-4 px-8 rounded-lg transition-colors disabled:opacity-50 flex items-center text-lg shadow-lg`}
+              ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800' 
+              : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800'
+          } text-white font-bold py-4 sm:py-5 px-8 sm:px-12 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center text-lg sm:text-xl shadow-lg hover:shadow-xl active:scale-95`}
         >
           {isSaving ? (
             <>
-              <i className="ri-loader-4-line animate-spin mr-2"></i>
+              <i className="ri-loader-4-line animate-spin mr-2 text-xl sm:text-2xl"></i>
               {isEditMode ? 'กำลังอัปเดต...' : 'กำลังบันทึก...'}
             </>
           ) : (
             <>
-              <i className={isEditMode ? 'ri-refresh-line mr-2' : 'ri-save-line mr-2'}></i>
+              <i className={`${isEditMode ? 'ri-refresh-line' : 'ri-save-line'} mr-2 text-xl sm:text-2xl`}></i>
               {isEditMode ? 'อัปเดตข้อมูล' : 'บันทึกข้อมูล'}
             </>
           )}
