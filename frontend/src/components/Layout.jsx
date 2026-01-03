@@ -20,7 +20,11 @@ const Layout = ({ children }) => {
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <i className="ri-seedling-line text-xl sm:text-2xl text-amber-600 mr-2"></i>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">ระบบติดตามผำอินทรีย์</h1>
+                <h1 className="text-sm sm:text-base lg:text-lg font-bold text-gray-900 leading-tight">
+                  <span className="hidden lg:inline">ระบบบริหารจัดการและควบคุมการผลิตไข่น้ำอินทรีย์ของกลุ่มผู้ประกอบการ</span>
+                  <span className="hidden sm:inline lg:hidden">ระบบควบคุมการผลิตไข่น้ำอินทรีย์</span>
+                  <span className="sm:hidden">ระบบผลิตไข่น้ำอินทรีย์</span>
+                </h1>
               </div>
             </div>
             <nav className="hidden md:flex space-x-4 lg:space-x-8">

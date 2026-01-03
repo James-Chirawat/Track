@@ -6,6 +6,25 @@ import QRCode from 'react-qr-code'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
+// Enterprise names list (same as DailyRecord.jsx)
+const ENTERPRISE_NAMES = [
+  'วิสาหกิจชุมชนรักษ์ดินทอง',
+  'วิสาหกิจชุมชนสวนไผ่พลังงานพัฒนาตำบลชัยนาม',
+  'วิสาหกิจชุมชนเศรษฐกิจพอเพียงแบบยั่งยืนอำเภอวังทอง',
+  'วิสาหกิจชุมชนบ้านเนินสะอาดไร่นาสวนผสม',
+  'วิสาหกิจชุมชนธิดาผักปลอดภัย',
+  'วิสาหกิจชุมชนเกษตรอินทรีย์ N-DO Fulltime',
+  'วิสาหกิจชุมชน Society farm',
+  'วิสาหกิจชุมชนดองได้ดองดี',
+  'วิสาหกิจชุมชนไร่ฟุ้งเฟื่องเมืองบางขลัง',
+  'วิสาหกิจชุมชนพืชสมุนไพรนครบางขลัง',
+  'วิสาหกิจชุมชนผักปลอดภัยจากสารพิษตำบลเกาะตาเลี้ยง',
+  'วิสาหกิจชุมชนบ้านแจ่มจ้า เมืองบางขลัง',
+  'วิสาหกิจบ้านสวนคุณทองเพียร',
+  'วิสาหกิจชุมชนปลูกและแปรรูปสมุนไพรทับยายเชียง',
+  'วิสาหกิจชุมชนเกษตรสุขใจ (แทนศูนย์เรียนรู้ดินและปุ๋ยชุมชนตำบลบ้านกร่าง)'
+]
+
 const ProductionRoadmap = () => {
   const [currentProduct, setCurrentProduct] = useState(null)
   const [selectedStage, setSelectedStage] = useState(null)
@@ -74,15 +93,15 @@ const ProductionRoadmap = () => {
       bgColor: 'bg-yellow-50',
       stages: [
         {
-          id: 'fermentation',
-          name: 'การหมัก',
-          icon: 'ri-flask-line',
+          id: 'fresh_packaging',
+          name: 'บรรจุแบบสด',
+          icon: 'ri-package-line',
           fields: [
-            { name: 'fermentation_start', label: 'วันที่เริ่มหมัก', type: 'date', required: true },
-            { name: 'fermentation_duration', label: 'ระยะเวลา (วัน)', type: 'number', required: true },
-            { name: 'temperature', label: 'อุณหภูมิ (°C)', type: 'number' },
-            { name: 'humidity', label: 'ความชื้น (%)', type: 'number' },
-            { name: 'fermentation_notes', label: 'หมายเหตุการหมัก', type: 'textarea' }
+            { name: 'packaging_date', label: 'วันที่บรรจุ', type: 'date', required: true },
+            { name: 'packaging_weight', label: 'น้ำหนักบรรจุ (กก.)', type: 'number', required: true },
+            { name: 'packaging_type', label: 'ประเภทบรรจุภัณฑ์', type: 'select', options: ['ถุงพลาสติก', 'กล่องโฟม', 'ถาดพลาสติก', 'อื่นๆ'], required: true },
+            { name: 'storage_temp', label: 'อุณหภูมิเก็บรักษา (°C)', type: 'number' },
+            { name: 'fresh_packaging_notes', label: 'หมายเหตุการบรรจุ', type: 'textarea' }
           ]
         },
         {
@@ -96,18 +115,6 @@ const ProductionRoadmap = () => {
             { name: 'final_moisture', label: 'ความชื้นสุดท้าย (%)', type: 'number' },
             { name: 'drying_notes', label: 'หมายเหตุการอบแห้ง', type: 'textarea' }
           ]
-        },
-        {
-          id: 'roasting',
-          name: 'การคั่ว',
-          icon: 'ri-fire-line',
-          fields: [
-            { name: 'roasting_date', label: 'วันที่คั่ว', type: 'date', required: true },
-            { name: 'roasting_temperature', label: 'อุณหภูมิ (°C)', type: 'number', required: true },
-            { name: 'roasting_duration', label: 'ระยะเวลา (นาที)', type: 'number', required: true },
-            { name: 'roast_level', label: 'ระดับการคั่ว', type: 'select', options: ['อ่อน', 'กลาง', 'เข้ม'], required: true },
-            { name: 'roasting_notes', label: 'หมายเหตุการคั่ว', type: 'textarea' }
-          ]
         }
       ]
     },
@@ -120,38 +127,51 @@ const ProductionRoadmap = () => {
       bgColor: 'bg-blue-50',
       stages: [
         {
-          id: 'grinding',
-          name: 'การบดและแปรรูป',
-          icon: 'ri-settings-4-line',
-          fields: [
-            { name: 'grinding_date', label: 'วันที่บด', type: 'date', required: true },
-            { name: 'grind_size', label: 'ขนาดการบด', type: 'select', options: ['ละเอียด', 'กลาง', 'หยาบ'], required: true },
-            { name: 'processing_method', label: 'วิธีการแปรรูป', type: 'text' },
-            { name: 'yield_percentage', label: 'เปอร์เซ็นต์ผลผลิต (%)', type: 'number' }
-          ]
-        },
-        {
-          id: 'packaging',
-          name: 'การบรรจุ',
-          icon: 'ri-archive-line',
-          fields: [
-            { name: 'packaging_date', label: 'วันที่บรรจุ', type: 'date', required: true },
-            { name: 'package_type', label: 'ประเภทบรรจุภัณฑ์', type: 'text', required: true },
-            { name: 'package_size', label: 'ขนาดบรรจุภัณฑ์', type: 'text', required: true },
-            { name: 'batch_number', label: 'หมายเลขชุดผลิต', type: 'text', required: true },
-            { name: 'expiry_date', label: 'วันหมดอายุ', type: 'date' }
-          ]
-        },
-        {
-          id: 'distribution',
-          name: 'การจัดจำหน่าย',
-          icon: 'ri-truck-line',
+          id: 'b2b',
+          name: 'B2B',
+          icon: 'ri-building-2-line',
           fields: [
             { name: 'distribution_date', label: 'วันที่จัดจำหน่าย', type: 'date', required: true },
-            { name: 'distributor_name', label: 'ชื่อผู้จัดจำหน่าย', type: 'text', required: true },
             { name: 'destination', label: 'จุดหมายปลายทาง', type: 'text', required: true },
-            { name: 'transport_method', label: 'วิธีการขนส่ง', type: 'text' },
-            { name: 'tracking_number', label: 'หมายเลขติดตาม', type: 'text' }
+            { name: 'buyer_name', label: 'ชื่อผู้รับซื้อ', type: 'text', required: true },
+            { name: 'distributor_name', label: 'ชื่อผู้จำหน่าย', type: 'text', required: true },
+            { name: 'enterprise_name', label: 'ชื่อวิสาหกิจ', type: 'select', options: ENTERPRISE_NAMES, required: true },
+            { name: 'shipping_cost', label: 'ค่าขนส่ง (บาท)', type: 'number', required: true },
+            { name: 'quantity', label: 'จำนวน (กก.)', type: 'number', required: true },
+            { name: 'total_price', label: 'ราคารวม (บาท)', type: 'number', required: true },
+            { name: 'notes', label: 'หมายเหตุ', type: 'textarea' }
+          ]
+        },
+        {
+          id: 'b2c',
+          name: 'B2C',
+          icon: 'ri-user-line',
+          fields: [
+            { name: 'distribution_date', label: 'วันที่จัดจำหน่าย', type: 'date', required: true },
+            { name: 'destination', label: 'จุดหมายปลายทาง', type: 'text', required: true },
+            { name: 'buyer_name', label: 'ชื่อผู้รับซื้อ', type: 'text', required: true },
+            { name: 'distributor_name', label: 'ชื่อผู้จำหน่าย', type: 'text', required: true },
+            { name: 'enterprise_name', label: 'ชื่อวิสาหกิจ', type: 'select', options: ENTERPRISE_NAMES, required: true },
+            { name: 'shipping_cost', label: 'ค่าขนส่ง (บาท)', type: 'number', required: true },
+            { name: 'quantity', label: 'จำนวน (กก.)', type: 'number', required: true },
+            { name: 'total_price', label: 'ราคารวม (บาท)', type: 'number', required: true },
+            { name: 'notes', label: 'หมายเหตุ', type: 'textarea' }
+          ]
+        },
+        {
+          id: 'network_trade',
+          name: 'ซื้อขายในเครือข่าย',
+          icon: 'ri-links-line',
+          fields: [
+            { name: 'distribution_date', label: 'วันที่จัดจำหน่าย', type: 'date', required: true },
+            { name: 'destination', label: 'จุดหมายปลายทาง', type: 'text', required: true },
+            { name: 'buyer_name', label: 'ชื่อผู้รับซื้อ', type: 'text', required: true },
+            { name: 'distributor_name', label: 'ชื่อผู้จำหน่าย', type: 'text', required: true },
+            { name: 'enterprise_name', label: 'ชื่อวิสาหกิจ', type: 'select', options: ENTERPRISE_NAMES, required: true },
+            { name: 'shipping_cost', label: 'ค่าขนส่ง (บาท)', type: 'number', required: true },
+            { name: 'quantity', label: 'จำนวน (กก.)', type: 'number', required: true },
+            { name: 'total_price', label: 'ราคารวม (บาท)', type: 'number', required: true },
+            { name: 'notes', label: 'หมายเหตุ', type: 'textarea' }
           ]
         }
       ]
@@ -269,7 +289,7 @@ const ProductionRoadmap = () => {
 
   const startNewProduct = async () => {
     if (!selectedBranch) {
-      alert('กรุณาเลือกสาขาก่อนเริ่มการผลิต')
+      alert('กรุณาเลือกวิสาหกิจก่อนเริ่มการผลิต')
       return
     }
 
@@ -410,8 +430,8 @@ const ProductionRoadmap = () => {
         }
       }
       
-      // If this is the distribution stage, update product status to completed
-      if (selectedStage.id === 'distribution') {
+      // If this is one of the downstream distribution stages, update product status to completed
+      if (['b2b', 'b2c', 'network_trade'].includes(selectedStage.id)) {
         try {
           // Try backend API first
           const response = await apiClient.updateProduct(currentProduct.id, {
@@ -421,7 +441,7 @@ const ProductionRoadmap = () => {
           if (response.success) {
             // Update local state
             setCurrentProduct(prev => ({ ...prev, status: 'completed' }))
-            alert('บันทึกข้อมูลการจัดจำหน่ายเรียบร้อยแล้ว! สถานะผลิตภัณฑ์เปลี่ยนเป็น "เสร็จสิ้น"')
+            alert(`บันทึกข้อมูล ${selectedStage.name} เรียบร้อยแล้ว! สถานะผลิตภัณฑ์เปลี่ยนเป็น "เสร็จสิ้น"`)
           } else {
             throw new Error('API call failed')
           }
@@ -438,7 +458,7 @@ const ProductionRoadmap = () => {
           
           // Update local state
           setCurrentProduct(prev => ({ ...prev, status: 'completed' }))
-          alert('บันทึกข้อมูลการจัดจำหน่ายเรียบร้อยแล้ว! สถานะผลิตภัณฑ์เปลี่ยนเป็น "เสร็จสิ้น"')
+          alert(`บันทึกข้อมูล ${selectedStage.name} เรียบร้อยแล้ว! สถานะผลิตภัณฑ์เปลี่ยนเป็น "เสร็จสิ้น"`)
         }
         
         setShowQR(true)
@@ -530,7 +550,7 @@ const ProductionRoadmap = () => {
           </div>
           <div style="font-size: 16px; color: #000; line-height: 1.8;">
             <div><strong>ชุดผลิต:</strong> ${currentProduct.batch_number}</div>
-            <div><strong>สาขา:</strong> ${currentProduct.branches?.name || 'ไม่ระบุ'}</div>
+            <div><strong>วิสาหกิจ:</strong> ${currentProduct.branches?.name || 'ไม่ระบุ'}</div>
             <div><strong>วันที่:</strong> ${new Date().toLocaleDateString('th-TH')}</div>
           </div>
         </div>
@@ -586,15 +606,15 @@ const ProductionRoadmap = () => {
 
       {showProductSelection ? (
         <div className="space-y-6">
-          {/* Branch Selection */}
+          {/* Enterprise Selection */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
               <i className="ri-building-line mr-2 text-blue-600"></i>
-              เลือกสาขา
+              เลือกวิสาหกิจ
             </h2>
             <div className="max-w-md">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                เลือกสาขาที่ต้องการจัดการ <span className="text-red-500">*</span>
+                เลือกวิสาหกิจที่ต้องการจัดการ <span className="text-red-500">*</span>
               </label>
               <select
                 value={selectedBranch}
@@ -602,10 +622,10 @@ const ProductionRoadmap = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 required
               >
-                <option value="">เลือกสาขา</option>
+                <option value="">-- เลือกวิสาหกิจ --</option>
                 {branches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
-                    {branch.name} - {branch.location}
+                    {branch.name}
                   </option>
                 ))}
               </select>
@@ -677,7 +697,7 @@ const ProductionRoadmap = () => {
                 ) : (
                   <div className="text-center py-8">
                     <i className="ri-inbox-line text-4xl text-gray-400 mb-4"></i>
-                    <p className="text-gray-600">ยังไม่มีล้อตสินค้าในสาขานี้</p>
+                    <p className="text-gray-600">ยังไม่มีล้อตสินค้าในวิสาหกิจนี้</p>
                   </div>
                 )}
               </div>
@@ -694,7 +714,7 @@ const ProductionRoadmap = () => {
                   ชุดผลิต: {currentProduct.batch_number}
                 </h2>
                 <p className="text-gray-600">
-                  สาขา: {currentProduct.branches?.name || 'ไม่ระบุ'}
+                  วิสาหกิจ: {currentProduct.branches?.name || 'ไม่ระบุ'}
                 </p>
                 <p className="text-gray-600">
                   เริ่มเมื่อ: {new Date(currentProduct.created_at).toLocaleDateString('th-TH')}

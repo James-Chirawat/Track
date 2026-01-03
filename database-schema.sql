@@ -94,18 +94,30 @@ CREATE POLICY "Allow public insert on production_stages" ON production_stages
 CREATE POLICY "Allow public update on production_stages" ON production_stages
     FOR UPDATE USING (true);
 
--- Sample data for testing (optional)
+-- Sample data for testing - 15 Enterprise Names (วิสาหกิจชุมชน)
 INSERT INTO branches (name, location, manager_name, phone) VALUES 
-    ('สาขาเชียงใหม่', 'เชียงใหม่, ประเทศไทย', 'สมชาย ใจดี', '081-234-5678'),
-    ('สาขากรุงเทพ', 'กรุงเทพมหานคร, ประเทศไทย', 'สมหญิง รักงาน', '082-345-6789'),
-    ('สาขาภูเก็ต', 'ภูเก็ต, ประเทศไทย', 'สมศักดิ์ ขยัน', '083-456-7890');
+    ('วิสาหกิจชุมชนรักษ์ดินทอง', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนสวนไผ่พลังงานพัฒนาตำบลชัยนาม', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนเศรษฐกิจพอเพียงแบบยั่งยืนอำเภอวังทอง', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนบ้านเนินสะอาดไร่นาสวนผสม', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนธิดาผักปลอดภัย', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนเกษตรอินทรีย์ N-DO Fulltime', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชน Society farm', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนดองได้ดองดี', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนไร่ฟุ้งเฟื่องเมืองบางขลัง', 'สุโขทัย, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนพืชสมุนไพรนครบางขลัง', 'สุโขทัย, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนผักปลอดภัยจากสารพิษตำบลเกาะตาเลี้ยง', 'สุโขทัย, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนบ้านแจ่มจ้า เมืองบางขลัง', 'สุโขทัย, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจบ้านสวนคุณทองเพียร', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนปลูกและแปรรูปสมุนไพรทับยายเชียง', 'พิษณุโลก, ประเทศไทย', NULL, NULL),
+    ('วิสาหกิจชุมชนเกษตรสุขใจ (แทนศูนย์เรียนรู้ดินและปุ๋ยชุมชนตำบลบ้านกร่าง)', 'พิษณุโลก, ประเทศไทย', NULL, NULL);
 
 INSERT INTO products (batch_number, branch_id, status) 
 SELECT 
     'COC-SAMPLE-001',
     b.id,
     'completed'
-FROM branches b WHERE b.name = 'สาขาเชียงใหม่'
+FROM branches b WHERE b.name = 'วิสาหกิจชุมชนรักษ์ดินทอง'
 LIMIT 1;
 
 INSERT INTO products (batch_number, branch_id, status) 
@@ -113,7 +125,7 @@ SELECT
     'COC-SAMPLE-002',
     b.id,
     'in_production'
-FROM branches b WHERE b.name = 'สาขากรุงเทพ'
+FROM branches b WHERE b.name = 'วิสาหกิจชุมชนสวนไผ่พลังงานพัฒนาตำบลชัยนาม'
 LIMIT 1;
 
 -- Daily Cultivation Records table - For organic water fern tracking
@@ -187,17 +199,17 @@ FROM products p WHERE p.batch_number = 'COC-SAMPLE-001';
 INSERT INTO production_stages (product_id, stage_id, stage_name, stage_data) 
 SELECT 
     p.id,
-    'fermentation',
-    'Fermentation',
-    '{"fermentation_start": "2024-06-16", "fermentation_duration": 7, "temperature": 45, "humidity": 85, "fermentation_notes": "Proper fermentation achieved"}'::jsonb
+    'fresh_packaging',
+    'Fresh Packaging',
+    '{"packaging_date": "2024-06-16", "packaging_weight": 5, "packaging_type": "ถุงพลาสติก", "storage_temp": 4, "fresh_packaging_notes": "บรรจุแบบสดพร้อมจำหน่าย"}'::jsonb
 FROM products p WHERE p.batch_number = 'COC-SAMPLE-001';
 
 INSERT INTO production_stages (product_id, stage_id, stage_name, stage_data) 
 SELECT 
     p.id,
-    'packaging',
-    'Packaging',
-    '{"packaging_date": "2024-07-01", "package_type": "Premium Chocolate Bar", "package_size": "100g", "batch_number": "COC-SAMPLE-001", "expiry_date": "2025-07-01"}'::jsonb
+    'b2b',
+    'B2B',
+    '{"distribution_date": "2024-07-01", "destination": "ตลาดสด พิษณุโลก", "buyer_name": "ร้านค้าส่งผักสด", "distributor_name": "นายสมชาย ใจดี", "enterprise_name": "วิสาหกิจชุมชนรักษ์ดินทอง", "shipping_cost": 150, "quantity": 10, "total_price": 1500, "notes": "ส่งมอบเรียบร้อย"}'::jsonb
 FROM products p WHERE p.batch_number = 'COC-SAMPLE-001';
 
 -- Add number_of_ponds column to daily_cultivation_records (for dynamic pond count)

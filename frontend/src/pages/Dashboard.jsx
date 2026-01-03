@@ -389,10 +389,10 @@ const Dashboard = () => {
         <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              ยินดีต้อนรับสู่ระบบติดตามผำอินทรีย์
+              ยินดีต้อนรับสู่ระบบติดตามไข่น้ำอินทรีย์
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">
-              ติดตามการผลิตผำอินทรีย์จากฟาร์มสู่ผลิตภัณฑ์สำเร็จรูป
+              ติดตามการผลิตไข่น้ำอินทรีย์จากฟาร์มสู่ผลิตภัณฑ์สำเร็จรูป
             </p>
           </div>
           
