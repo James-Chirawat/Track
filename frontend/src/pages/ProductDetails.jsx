@@ -268,21 +268,6 @@ const ProductDetails = () => {
               </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="mb-3 flex items-center gap-2">
-                <i className="ri-flask-line text-xl text-violet-700"></i>
-                <h2 className="text-lg font-bold">ผล Lab</h2>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {LAB_RESULTS.map((result) => (
-                  <div key={result.label} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs font-semibold text-slate-500">{result.label}</p>
-                    <p className="mt-1 text-lg font-bold text-slate-900">{result.value}</p>
-                    <p className="mt-1 text-xs text-emerald-700">{result.status}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
 
             <section className="rounded-lg border border-slate-200 bg-white p-4 text-center shadow-sm">
               <div className="flex gap-2">
