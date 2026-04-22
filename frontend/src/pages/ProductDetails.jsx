@@ -2,6 +2,7 @@ import { useCallback, useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { apiClient } from '../lib/api'
+import LoadingSpinner from '../components/LoadingSpinner'
 import QRCode from 'react-qr-code'
 import { createProductUrl } from '../lib/qr'
 import labCertificate1 from '../assets/certificates/lab1.png'
@@ -13,6 +14,11 @@ const MOCK_BATCH = {
   productionDate: '25/4/2569',
   enterpriseName: 'วิสาหกิจชุมชนรักษ์ดินทอง'
 }
+
+const MOTHER_STOCK_SOURCES = [
+  'วิสาหกิจชุมชนรักษ์ดินทอง',
+  'วิสาหกิจชุมชนเกษตรอินทรีย์ N-DO Fulltime'
+]
 
 const SOP_DAYS = [
   {
@@ -94,6 +100,14 @@ const LAB_RESULTS = [
   { label: 'ผลสรุป Lab', value: 'ไม่พบสารตกค้าง', status: 'ปลอดภัย' }
 ]
 
+const pickMotherStockSource = (seed) => {
+  const hash = String(seed || '')
+    .split('')
+    .reduce((total, char) => total + char.charCodeAt(0), 0)
+
+  return MOTHER_STOCK_SOURCES[hash % MOTHER_STOCK_SOURCES.length]
+}
+
 const ProductDetails = () => {
   const { id } = useParams()
   const [product, setProduct] = useState(null)
@@ -158,6 +172,15 @@ const ProductDetails = () => {
     enterpriseName: product?.branches?.name || MOCK_BATCH.enterpriseName
   }
   const productUrl = createProductUrl(id)
+  const motherStockSource = pickMotherStockSource(id || batchInfo.batchNumber)
+  const sopDays = SOP_DAYS.map((item) => (
+    item.day === 0
+      ? {
+          ...item,
+          activity: `${item.activity} แม่พันธุ์มาจาก ${motherStockSource}`
+        }
+      : item
+  ))
 
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900">
@@ -171,10 +194,7 @@ const ProductDetails = () => {
       <main className="mx-auto max-w-md px-4 py-4">
         {loading ? (
           <div className="flex min-h-48 items-center justify-center rounded-lg border border-emerald-100 bg-white">
-            <div className="text-center">
-              <i className="ri-loader-4-line mb-3 block text-3xl text-emerald-700 animate-spin"></i>
-              <p className="text-sm text-slate-600">กำลังโหลดข้อมูลล็อตการผลิต...</p>
-            </div>
+            <LoadingSpinner message="กำลังโหลดข้อมูลล็อตการผลิต..." size="medium" />
           </div>
         ) : (
           <div className="space-y-4">
@@ -213,7 +233,7 @@ const ProductDetails = () => {
               </div>
 
               <div className="space-y-2">
-                {SOP_DAYS.map((item) => {
+                {sopDays.map((item) => {
                   const hasActivity = Boolean(item.activity)
                   const icon = item.icon || 'ri-checkbox-blank-circle-line'
                   const tone = item.tone || 'bg-slate-100 text-slate-400 border-slate-200'

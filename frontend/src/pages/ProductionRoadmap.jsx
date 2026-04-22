@@ -6,25 +6,13 @@ import QRCode from 'react-qr-code'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { createProductUrl } from '../lib/qr'
+import {
+  MANAGED_ENTERPRISE_NAMES,
+  filterManagedBranches,
+  getEnterpriseDisplayName
+} from '../lib/enterprises'
 
-// Enterprise names list (same as DailyRecord.jsx)
-const ENTERPRISE_NAMES = [
-  'วิสาหกิจชุมชนรักษ์ดินทอง',
-  'วิสาหกิจชุมชนสวนไผ่พลังงานพัฒนาตำบลชัยนาม',
-  'วิสาหกิจชุมชนเศรษฐกิจพอเพียงแบบยั่งยืนอำเภอวังทอง',
-  'วิสาหกิจชุมชนบ้านเนินสะอาดไร่นาสวนผสม',
-  'วิสาหกิจชุมชนธิดาผักปลอดภัย',
-  'วิสาหกิจชุมชนเกษตรอินทรีย์ N-DO Fulltime',
-  'วิสาหกิจชุมชน Society farm',
-  'วิสาหกิจชุมชนดองได้ดองดี',
-  'วิสาหกิจชุมชนไร่ฟุ้งเฟื่องเมืองบางขลัง',
-  'วิสาหกิจชุมชนพืชสมุนไพรนครบางขลัง',
-  'วิสาหกิจชุมชนผักปลอดภัยจากสารพิษตำบลเกาะตาเลี้ยง',
-  'วิสาหกิจชุมชนบ้านแจ่มจ้า เมืองบางขลัง',
-  'วิสาหกิจบ้านสวนคุณทองเพียร',
-  'วิสาหกิจชุมชนปลูกและแปรรูปสมุนไพรทับยายเชียง',
-  'วิสาหกิจชุมชนเกษตรสุขใจ (แทนศูนย์เรียนรู้ดินและปุ๋ยชุมชนตำบลบ้านกร่าง)'
-]
+const ENTERPRISE_NAMES = MANAGED_ENTERPRISE_NAMES
 
 const ProductionRoadmap = () => {
   const [currentProduct, setCurrentProduct] = useState(null)
@@ -200,7 +188,7 @@ const ProductionRoadmap = () => {
     try {
       const response = await apiClient.getBranches()
       if (response.success) {
-        setBranches(response.data || [])
+        setBranches(filterManagedBranches(response.data || []))
       }
     } catch (error) {
       console.error('Error fetching branches:', error)
@@ -212,7 +200,7 @@ const ProductionRoadmap = () => {
           .order('name')
 
         if (error) throw error
-        setBranches(data || [])
+        setBranches(filterManagedBranches(data || []))
       } catch (fallbackError) {
         console.error('Fallback error:', fallbackError)
       }
@@ -628,7 +616,7 @@ const ProductionRoadmap = () => {
                 <option value="">-- เลือกวิสาหกิจ --</option>
                 {branches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
-                    {branch.name}
+                    {getEnterpriseDisplayName(branch.name)}
                   </option>
                 ))}
               </select>

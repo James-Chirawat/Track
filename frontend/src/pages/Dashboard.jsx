@@ -7,6 +7,28 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import QRCodeGenerator from 'qrcode'
 import { createProductUrl } from '../lib/qr'
+import {
+  filterManagedBranches,
+  getEnterpriseDisplayName,
+  isManagedEnterprise
+} from '../lib/enterprises'
+
+const getProductBranchName = (product) => {
+  const branch = Array.isArray(product.branches) ? product.branches[0] : product.branches
+  return branch?.name || ''
+}
+
+const getActivityBranchName = (activity) => {
+  const product = activity.products
+  const branch = Array.isArray(product?.branches) ? product.branches[0] : product?.branches
+  return branch?.name || ''
+}
+
+const getActivityBranchId = (activity) => {
+  const product = activity.products
+  const branch = Array.isArray(product?.branches) ? product.branches[0] : product?.branches
+  return branch?.id || product?.branch_id || ''
+}
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -30,7 +52,7 @@ const Dashboard = () => {
       setError('')
       const response = await apiClient.getBranches()
       if (response.success) {
-        setBranches(response.data || [])
+        setBranches(filterManagedBranches(response.data || []))
       }
     } catch (error) {
       console.error('Error fetching branches:', error)
@@ -42,7 +64,7 @@ const Dashboard = () => {
           .order('name')
 
         if (error) throw error
-        setBranches(data || [])
+        setBranches(filterManagedBranches(data || []))
       } catch (fallbackError) {
         console.error('Fallback error:', fallbackError)
         setError('ไม่สามารถโหลดข้อมูลสาขาได้')
@@ -56,28 +78,30 @@ const Dashboard = () => {
       // Try to use backend API first
       const response = await apiClient.getDashboardData()
       if (response.success) {
-        const { totalProducts, inProduction, completed, cancelled, statusDistribution, branchStats, recentActivity } = response.data
+        const { statusDistribution, branchStats, recentActivity } = response.data
+        const managedBranchStats = (branchStats || []).filter((branch) => isManagedEnterprise(branch.branchName))
+        const managedRecentActivity = (recentActivity || []).filter((activity) => isManagedEnterprise(getActivityBranchName(activity)))
         
         // Filter by selected branch if needed
         let filteredStats = { 
-          totalProducts, 
-          inProduction, 
-          completed, 
-          cancelled,
+          totalProducts: managedBranchStats.reduce((sum, branch) => sum + (branch.total || 0), 0), 
+          inProduction: managedBranchStats.reduce((sum, branch) => sum + (branch.inProduction || 0), 0), 
+          completed: managedBranchStats.reduce((sum, branch) => sum + (branch.completed || 0), 0), 
+          cancelled: managedBranchStats.reduce((sum, branch) => sum + (branch.cancelled || 0), 0),
           statusDistribution,
-          branchStats,
-          recentActivity 
+          branchStats: managedBranchStats,
+          recentActivity: managedRecentActivity.slice(0, 10)
         }
         
         if (selectedBranch) {
           // Filter recent activity by branch
-          const filteredActivity = recentActivity.filter(activity => 
-            activity.products?.branches?.id === selectedBranch
+          const filteredActivity = managedRecentActivity.filter(activity => 
+            getActivityBranchId(activity) === selectedBranch
           )
           filteredStats.recentActivity = filteredActivity.slice(0, 10)
           
           // Filter branch stats to show only selected branch
-          const selectedBranchStats = branchStats.find(branch => branch.branchId === selectedBranch)
+          const selectedBranchStats = (branchStats || []).find(branch => branch.branchId === selectedBranch)
           if (selectedBranchStats) {
             filteredStats.totalProducts = selectedBranchStats.total
             filteredStats.inProduction = selectedBranchStats.inProduction
@@ -104,6 +128,7 @@ const Dashboard = () => {
           status, 
           branch_id,
           branches (
+            id,
             name
           )
         `)
@@ -115,11 +140,14 @@ const Dashboard = () => {
       const { data: products, error: productsError } = await productsQuery
 
       if (productsError) throw productsError
+      const managedProducts = selectedBranch
+        ? (products || [])
+        : (products || []).filter((product) => isManagedEnterprise(getProductBranchName(product)))
 
-      const totalProducts = products?.length || 0
-      const inProduction = products?.filter(p => p.status === 'in_production').length || 0
-      const completed = products?.filter(p => p.status === 'completed').length || 0
-      const cancelled = products?.filter(p => p.status === 'cancelled').length || 0
+      const totalProducts = managedProducts.length
+      const inProduction = managedProducts.filter(p => p.status === 'in_production').length
+      const completed = managedProducts.filter(p => p.status === 'completed').length
+      const cancelled = managedProducts.filter(p => p.status === 'cancelled').length
 
       // Fetch recent activity with branch filter
       let activityQuery = supabase
@@ -131,7 +159,9 @@ const Dashboard = () => {
           products (
             id,
             batch_number,
+            branch_id,
             branches (
+              id,
               name
             )
           )
@@ -147,8 +177,10 @@ const Dashboard = () => {
       let filteredActivity = recentActivity || []
       if (selectedBranch) {
         filteredActivity = filteredActivity.filter(activity => 
-          activity.products?.branches?.some(branch => branch.id === selectedBranch)
+          getActivityBranchId(activity) === selectedBranch
         )
+      } else {
+        filteredActivity = filteredActivity.filter((activity) => isManagedEnterprise(getActivityBranchName(activity)))
       }
 
       setStats({
@@ -172,7 +204,7 @@ const Dashboard = () => {
     try {
       const response = await apiClient.getProducts()
       if (response.success) {
-        setProducts(response.data || [])
+        setProducts((response.data || []).filter((product) => isManagedEnterprise(getProductBranchName(product))))
       }
     } catch (error) {
       console.error('Error fetching products:', error)
@@ -191,7 +223,7 @@ const Dashboard = () => {
           .order('created_at', { ascending: false })
 
         if (error) throw error
-        setProducts(data || [])
+        setProducts((data || []).filter((product) => isManagedEnterprise(getProductBranchName(product))))
       } catch (fallbackError) {
         console.error('Fallback error:', fallbackError)
       }
@@ -235,7 +267,7 @@ const Dashboard = () => {
             QR Codes - ระบบติดตามผำอินทรีย์
           </h1>
           <p style="color: #6b7280; font-size: 14px;">
-            ${selectedBranch ? branches.find(b => b.id === selectedBranch)?.name || 'สาขาที่เลือก' : 'ทุกสาขา'}
+            ${selectedBranch ? getEnterpriseDisplayName(branches.find(b => b.id === selectedBranch)?.name) || 'สาขาที่เลือก' : 'ทุกสาขา'}
           </p>
         </div>
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
@@ -246,7 +278,7 @@ const Dashboard = () => {
                 ${product.batch_number}
               </p>
               <p style="font-size: 10px; color: #6b7280;">
-                ${product.branches?.name || 'ไม่ระบุสาขา'}
+                ${getEnterpriseDisplayName(getProductBranchName(product)) || 'ไม่ระบุสาขา'}
               </p>
             </div>
           `).join('')}
@@ -277,7 +309,7 @@ const Dashboard = () => {
 
       // Save PDF
       const branchName = selectedBranch 
-        ? branches.find(b => b.id === selectedBranch)?.name || 'สาขาที่เลือก'
+        ? getEnterpriseDisplayName(branches.find(b => b.id === selectedBranch)?.name) || 'สาขาที่เลือก'
         : 'ทุกสาขา'
       pdf.save(`QR-Codes-${branchName}-${new Date().toISOString().split('T')[0]}.pdf`)
 
@@ -396,7 +428,7 @@ const Dashboard = () => {
               <option value="">ทุกสาขา</option>
               {branches.map((branch) => (
                 <option key={branch.id} value={branch.id}>
-                  {branch.name}
+                  {getEnterpriseDisplayName(branch.name)}
                 </option>
               ))}
             </select>
@@ -446,7 +478,7 @@ const Dashboard = () => {
               <div key={branch.branchId} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h4 className="font-semibold text-gray-900">{branch.branchName}</h4>
+                    <h4 className="font-semibold text-gray-900">{getEnterpriseDisplayName(branch.branchName)}</h4>
                     <p className="text-sm text-gray-600">{branch.branchLocation}</p>
                   </div>
                   <div className="text-right">
@@ -571,7 +603,7 @@ const Dashboard = () => {
                       ชุดผลิต: {activity.products?.batch_number || 'ไม่ระบุ'}
                     </p>
                     <p className="text-xs text-gray-400 truncate">
-                      สาขา: {activity.products?.branches?.name || 'ไม่ระบุ'}
+                      สาขา: {getEnterpriseDisplayName(getActivityBranchName(activity)) || 'ไม่ระบุ'}
                     </p>
                   </div>
                   <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
