@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { apiClient } from '../lib/api'
 import LoadingSpinner from '../components/LoadingSpinner'
-import QRCode from 'react-qr-code'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import QRCodeGenerator from 'qrcode'
+import { createProductUrl } from '../lib/qr'
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -217,6 +218,15 @@ const Dashboard = () => {
       const filteredProducts = selectedBranch 
         ? products.filter(p => p.branch_id === selectedBranch)
         : products
+      const qrItems = await Promise.all(
+        filteredProducts.slice(0, 12).map(async (product) => ({
+          product,
+          qrDataUrl: await QRCodeGenerator.toDataURL(createProductUrl(product.id), {
+            width: 120,
+            margin: 1
+          })
+        }))
+      )
 
       // Create QR codes grid
       tempContainer.innerHTML = `
@@ -229,9 +239,9 @@ const Dashboard = () => {
           </p>
         </div>
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-          ${filteredProducts.slice(0, 12).map(product => `
+          ${qrItems.map(({ product, qrDataUrl }) => `
             <div style="text-align: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
-              <div id="qr-${product.id}" style="margin-bottom: 10px;"></div>
+              <img src="${qrDataUrl}" alt="QR Code ${product.batch_number}" style="width: 120px; height: 120px; margin: 0 auto 10px;" />
               <p style="font-size: 12px; font-weight: bold; color: #1f2937; margin-bottom: 5px;">
                 ${product.batch_number}
               </p>
@@ -244,27 +254,6 @@ const Dashboard = () => {
       `
 
       document.body.appendChild(tempContainer)
-
-      // Generate QR codes
-      filteredProducts.slice(0, 12).forEach(product => {
-        const qrContainer = tempContainer.querySelector(`#qr-${product.id}`)
-        if (qrContainer) {
-          const qrCode = document.createElement('div')
-          qrCode.innerHTML = `<svg width="120" height="120"></svg>`
-          qrContainer.appendChild(qrCode)
-          
-          // Use react-qr-code to generate QR
-          const qrValue = `${window.location.origin}/product/${product.id}`
-          // Create a simple QR placeholder for PDF generation
-          qrContainer.innerHTML = `
-            <div style="width: 120px; height: 120px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
-              <span style="font-size: 10px; text-align: center; word-break: break-all; padding: 5px;">
-                ${qrValue}
-              </span>
-            </div>
-          `
-        }
-      })
 
       // Generate PDF
       const canvas = await html2canvas(tempContainer, {

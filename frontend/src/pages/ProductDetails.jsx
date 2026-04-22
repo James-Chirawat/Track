@@ -3,8 +3,10 @@ import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { apiClient } from '../lib/api'
 import QRCode from 'react-qr-code'
-import organicCertificate from '../assets/certificates/organic-certificate.png'
-import safeFarmCertificate from '../assets/certificates/safe-farm-certificate.png'
+import { createProductUrl } from '../lib/qr'
+import labCertificate1 from '../assets/certificates/lab1.png'
+import labCertificate2 from '../assets/certificates/lab2.png'
+import labCertificate3 from '../assets/certificates/lab3.png'
 
 const MOCK_BATCH = {
   batchNumber: 'LOT-INKNAAM-2569-001',
@@ -72,12 +74,16 @@ const SOP_DAYS = [
 
 const CERTIFICATES = [
   {
-    title: 'ใบรับรองมาตรฐานอินทรีย์',
-    image: organicCertificate
+    title: 'ผลตรวจ Lab 1',
+    image: labCertificate1
   },
   {
-    title: 'ใบรับรองแหล่งผลิตปลอดภัย',
-    image: safeFarmCertificate
+    title: 'ผลตรวจ Lab 2',
+    image: labCertificate2
+  },
+  {
+    title: 'ผลตรวจ Lab 3',
+    image: labCertificate3
   }
 ]
 
@@ -151,6 +157,7 @@ const ProductDetails = () => {
     productionDate: MOCK_BATCH.productionDate,
     enterpriseName: product?.branches?.name || MOCK_BATCH.enterpriseName
   }
+  const productUrl = createProductUrl(id)
 
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900">
@@ -245,13 +252,13 @@ const ProductDetails = () => {
                 <i className="ri-award-line text-xl text-amber-600"></i>
                 <h2 className="text-lg font-bold">ใบรับรอง</h2>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 {CERTIFICATES.map((certificate) => (
                   <figure key={certificate.title} className="rounded-lg border border-slate-200 bg-slate-50 p-2">
                     <img
                       src={certificate.image}
                       alt={certificate.title}
-                      className="aspect-[4/3] w-full rounded-md border border-white object-cover shadow-sm"
+                      className="w-full rounded-md border border-white object-contain shadow-sm"
                     />
                     <figcaption className="mt-2 text-center text-xs font-semibold leading-5 text-slate-700">
                       {certificate.title}
@@ -297,7 +304,7 @@ const ProductDetails = () => {
               {showQR && (
                 <div className="mt-4 border-t border-slate-200 pt-4">
                   <div className="inline-block rounded-lg border-2 border-slate-200 bg-white p-3">
-                    <QRCode value={`${window.location.origin}/product/${id}`} size={132} />
+                    <QRCode value={productUrl} size={132} />
                   </div>
                   <p className="mt-2 text-xs text-slate-500">QR Code สำหรับล็อตนี้</p>
                 </div>

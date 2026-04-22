@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import QrScanner from 'qr-scanner'
+import { getProductIdFromQrData } from '../lib/qr'
 
 const QRScanner = () => {
   const [isScanning, setIsScanning] = useState(false)
@@ -60,20 +61,11 @@ const QRScanner = () => {
   const handleScanResult = (data) => {
     console.log('QR Code scanned:', data)
     stopScanning()
-    
-    // Extract product ID from URL
-    try {
-      const url = new URL(data)
-      const pathParts = url.pathname.split('/')
-      const productIndex = pathParts.indexOf('product')
-      
-      if (productIndex !== -1 && pathParts[productIndex + 1]) {
-        const productId = pathParts[productIndex + 1]
-        navigate(`/product/${productId}`)
-      } else {
-        setError('Invalid QR code format')
-      }
-    } catch (err) {
+
+    const productId = getProductIdFromQrData(data)
+    if (productId) {
+      navigate(`/product/${encodeURIComponent(productId)}`)
+    } else {
       setError('Invalid QR code format')
     }
   }
@@ -81,21 +73,9 @@ const QRScanner = () => {
   const handleManualSubmit = (e) => {
     e.preventDefault()
     if (manualInput.trim()) {
-      // Try to extract product ID from manual input
-      try {
-        if (manualInput.includes('/product/')) {
-          const url = new URL(manualInput)
-          const pathParts = url.pathname.split('/')
-          const productIndex = pathParts.indexOf('product')
-          const productId = pathParts[productIndex + 1]
-          navigate(`/product/${productId}`)
-        } else {
-          // Assume it's a direct product ID
-          navigate(`/product/${manualInput.trim()}`)
-        }
-      } catch (err) {
-        // Assume it's a direct product ID
-        navigate(`/product/${manualInput.trim()}`)
+      const productId = getProductIdFromQrData(manualInput)
+      if (productId) {
+        navigate(`/product/${encodeURIComponent(productId)}`)
       }
     }
   }

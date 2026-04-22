@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import QRCode from 'react-qr-code'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import { createProductUrl } from '../lib/qr'
 
 // Enterprise names list (same as DailyRecord.jsx)
 const ENTERPRISE_NAMES = [
@@ -593,6 +594,8 @@ const ProductionRoadmap = () => {
     }
   }
 
+  const currentProductUrl = currentProduct ? createProductUrl(currentProduct.id) : ''
+
   return (
     <div className="px-4 sm:px-0">
       <div className="mb-8">
@@ -772,7 +775,7 @@ const ProductionRoadmap = () => {
               <h3 className="text-lg font-semibold mb-4">QR Code ผลิตภัณฑ์</h3>
               <div ref={qrRef} className="inline-block p-4 bg-white border-2 border-gray-200 rounded-lg">
                 <QRCode
-                  value={`${window.location.origin}/product/${currentProduct.id}`}
+                  value={currentProductUrl}
                   size={200}
                 />
               </div>
