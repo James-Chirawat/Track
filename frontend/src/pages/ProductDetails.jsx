@@ -164,7 +164,7 @@ const ProductDetails = () => {
       <header className="sticky top-0 z-40 border-b border-emerald-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-md items-center px-4">
           <i className="ri-qr-scan-2-line mr-2 text-xl text-emerald-700"></i>
-          <h1 className="truncate text-base font-bold">ข้อมูลหลังสแกน QR Code</h1>
+          <h1 className="truncate text-base font-bold">ข้อมูล</h1>
         </div>
       </header>
 
